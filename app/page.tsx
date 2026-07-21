@@ -306,6 +306,7 @@ export default function Home() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [replyMode, setReplyMode] = useState<"reply" | "reply_all">("reply");
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [companionWidth, setCompanionWidth] = useState(34);
 
   function updateAssistantHistory(
     next:
@@ -315,6 +316,29 @@ export default function Home() {
     const resolved = typeof next === "function" ? next(assistantHistoryRef.current) : next;
     assistantHistoryRef.current = resolved;
     setAssistantHistory(resolved);
+  }
+
+  function resizeCompanion(event: React.PointerEvent<HTMLDivElement>) {
+    const container = event.currentTarget.parentElement;
+    if (!container) return;
+    const bounds = container.getBoundingClientRect();
+    const pointerId = event.pointerId;
+    event.currentTarget.setPointerCapture(pointerId);
+
+    function move(pointerEvent: PointerEvent) {
+      const nextWidth = ((bounds.right - pointerEvent.clientX) / bounds.width) * 100;
+      setCompanionWidth(Math.min(56, Math.max(26, nextWidth)));
+    }
+
+    function stop() {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    }
+
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   }
 
   function parseAddressList(value: string) {
@@ -913,8 +937,12 @@ export default function Home() {
           </div>
         </section>
 
-        <aside className="right-zone" aria-label="AI observations and conversation">
-          <section className="thread-card">
+        <aside
+          className={assistantOpen ? "right-zone companion-split-open" : "right-zone"}
+          aria-label="AI observations and conversation"
+          style={assistantOpen ? ({ "--companion-width": `${companionWidth}%` } as React.CSSProperties) : undefined}
+        >
+          <section className="thread-card reader-pane">
             {!selectedMessage ? (
               <div className="empty-reader">
                 <p>{activeMailbox}</p>
@@ -991,7 +1019,16 @@ export default function Home() {
             </div>
 
             {assistantOpen && (
-              <section className="assistant-chat copilot-panel" aria-label="AI companion inbox assistant">
+              <>
+              <div
+                className="companion-resizer"
+                role="separator"
+                aria-label="Resize AI companion"
+                aria-orientation="vertical"
+                tabIndex={0}
+                onPointerDown={resizeCompanion}
+              />
+              <section className="assistant-chat copilot-panel companion-pane" aria-label="AI companion inbox assistant">
                 <header>
                   <div>
                     <strong>AI companion</strong>
@@ -1003,7 +1040,7 @@ export default function Home() {
                 </header>
 
                 <div className="companion-guardrails" role="note">
-                  <strong>Full pane mode</strong>
+                  <strong>Split pane mode</strong>
                   <span>
                     I can search, read, summarise, cite sources, open messages, and draft. Sending or destructive actions still need your confirmation.
                   </span>
@@ -1069,6 +1106,7 @@ export default function Home() {
                   </button>
                 </form>
               </section>
+              </>
             )}
 
             <footer className="reply-composer">
