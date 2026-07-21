@@ -23,7 +23,9 @@ export default function MicrosoftCallbackPage() {
         const providerToken = data.session.provider_token;
         const providerRefreshToken = data.session.provider_refresh_token;
         if (!providerToken) {
-          throw new Error("Microsoft did not return a Graph access token.");
+          window.history.replaceState({}, document.title, "/auth/callback");
+          window.location.replace("/reset-password");
+          return;
         }
 
         const response = await fetch("/api/connectors/microsoft/session", {
@@ -46,7 +48,9 @@ export default function MicrosoftCallbackPage() {
         if (!active) return;
         setState("success");
         setDetail("Microsoft 365 is connected. Returning to Allied Radar…");
-        window.setTimeout(() => window.location.replace("/"), 900);
+        const nextPath = window.localStorage.getItem("allied-radar-auth-next") || "/";
+        window.localStorage.removeItem("allied-radar-auth-next");
+        window.setTimeout(() => window.location.replace(nextPath), 900);
       } catch (error) {
         if (!active) return;
         setState("error");
