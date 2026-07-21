@@ -24,9 +24,20 @@ type MailboxFilter =
   | "Unread";
 type ProviderName = "Outlook" | "Teams" | "Odoo Discuss" | "WhatsApp";
 
+type AssistantCitation = {
+  ref: string;
+  id: string;
+  source: string;
+  sender: string;
+  subject: string;
+  date: string | null;
+  folder?: string | null;
+};
+
 type AssistantMessage = {
   role: "user" | "assistant";
   content: string;
+  citations?: AssistantCitation[];
 };
 
 type CommandIntent = "search" | "companion";
@@ -395,6 +406,43 @@ export default function Home() {
     }
   }
 
+  async function openCitation(citation: AssistantCitation) {
+    setThreadLoading(true);
+    try {
+      const { data } = await getSupabaseBrowserClient().auth.getSession();
+      if (!data.session) throw new Error("Connect Microsoft 365 before opening cited messages.");
+      const response = await fetch(`/api/inbox/thread?messageId=${encodeURIComponent(citation.id)}`, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      const payload = (await response.json()) as { messages?: StoredMessage[]; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not open cited message.");
+      const liveThread = (payload.messages || []).map(toInboxMessage) as InboxMessage[];
+      const citedMessage = liveThread.find((message) => message.id === citation.id) ?? liveThread[0];
+      if (!citedMessage) throw new Error("The cited message is no longer available.");
+      setInboxMessages((current) => {
+        const existing = new Set(current.map((message) => message.id));
+        return [...liveThread.filter((message) => !existing.has(message.id)), ...current];
+      });
+      setSelectedMessageId(citedMessage.id);
+      setReplyText(citedMessage.draft);
+      setReplyMode("reply");
+      setThreadMessages(liveThread.length ? liveThread : [citedMessage]);
+      setSearchNote(`Opened ${citation.ref}: ${citation.subject}`);
+      void markLocalMessage(citedMessage, "open");
+    } catch (error) {
+      updateAssistantHistory((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: error instanceof Error ? error.message : "Could not open the cited message.",
+        },
+      ]);
+    } finally {
+      setThreadLoading(false);
+    }
+  }
+
   async function markLocalMessage(message: InboxMessage, action: "open" | "acknowledge") {
     try {
       const { data } = await getSupabaseBrowserClient().auth.getSession();
@@ -582,13 +630,19 @@ export default function Home() {
           history: historyBeforeQuestion,
         }),
       });
-      const payload = (await response.json()) as { answer?: string; error?: string; model?: string };
+      const payload = (await response.json()) as {
+        answer?: string;
+        citations?: AssistantCitation[];
+        error?: string;
+        model?: string;
+      };
       if (!response.ok) throw new Error(payload.error || "AI companion is unavailable.");
       updateAssistantHistory([
         ...nextHistory,
         {
           role: "assistant",
           content: payload.answer || "I could not produce a useful answer from the current inbox context.",
+          citations: payload.citations,
         },
       ]);
     } catch (error) {
@@ -959,7 +1013,24 @@ export default function Home() {
                 <div className="assistant-messages" ref={assistantMessagesRef}>
                   {assistantHistory.map((message, index) => (
                     <article className={`assistant-bubble ${message.role}`} key={`${message.role}-${index}`}>
-                      {message.content}
+                      <span>{message.content}</span>
+                      {message.citations?.length ? (
+                        <div className="assistant-citations" aria-label="Open cited messages">
+                          {message.citations.slice(0, 8).map((citation) => (
+                            <button
+                              key={`${citation.ref}-${citation.id}`}
+                              type="button"
+                              onClick={() => void openCitation(citation)}
+                            >
+                              <strong>{citation.ref}</strong>
+                              <span>{citation.subject}</span>
+                              <small>
+                                {citation.source} · {citation.sender}
+                              </small>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
                     </article>
                   ))}
                   {assistantBusy && <article className="assistant-bubble assistant">Thinking…</article>}

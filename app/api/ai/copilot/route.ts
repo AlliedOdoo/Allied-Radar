@@ -16,6 +16,8 @@ type MessageRow = {
   external_id: string;
   external_thread_id: string | null;
   sender: { name?: string; address?: string; phone?: string } | null;
+  recipients: unknown;
+  participants: unknown;
   subject: string | null;
   preview: string | null;
   body_text: string;
@@ -35,7 +37,7 @@ type CopilotRequest = {
 };
 
 const SELECT =
-  "id,source,external_id,external_thread_id,sender,subject,preview,body_text,received_at,sent_at,is_read,is_flagged,mail_folder,importance,ai_reason";
+  "id,source,external_id,external_thread_id,sender,recipients,participants,subject,preview,body_text,received_at,sent_at,is_read,is_flagged,mail_folder,importance,ai_reason";
 
 const SOURCE_LABELS: Record<Source, string> = {
   outlook: "Outlook",
@@ -120,6 +122,8 @@ function searchableText(message: MessageRow) {
     message.sender?.name,
     message.sender?.address,
     message.sender?.phone,
+    JSON.stringify(message.recipients ?? ""),
+    JSON.stringify(message.participants ?? ""),
   ].filter(Boolean).join(" ").toLowerCase();
 }
 
@@ -178,7 +182,7 @@ async function fetchSelectedThread(userId: string, accessToken: string, selected
 
 async function fetchRelevantMessages(userId: string, accessToken: string, question: string) {
   const filter = searchFilter(question);
-  const limit = filter ? 40 : 30;
+  const limit = filter ? 200 : 60;
   const rows = await supabaseRest<MessageRow[]>(
     `/rest/v1/messages?user_id=eq.${postgrestValue(userId)}${filter}&deleted_at=is.null&select=${SELECT}&order=received_at.desc.nullslast,sent_at.desc.nullslast,created_at.desc&limit=${limit}`,
     { method: "GET" },
