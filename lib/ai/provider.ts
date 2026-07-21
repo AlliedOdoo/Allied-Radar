@@ -24,7 +24,8 @@ export async function runAiChat(messages: AiChatMessage[], maxTokens = 900) {
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "X-Title": "Allied Radar",
+      "HTTP-Referer": "https://allied-radar.mdrracing.workers.dev",
+      "X-OpenRouter-Title": "Allied Radar",
     },
     body: JSON.stringify({
       model: AI_MODEL,

@@ -29,6 +29,8 @@ type AssistantMessage = {
   content: string;
 };
 
+type CommandIntent = "search" | "companion";
+
 type StoredMessage = {
   id: string;
   source: "outlook" | "teams" | "odoo_discuss" | "whatsapp" | "mobile_notification";
@@ -115,6 +117,22 @@ const proactiveCards = [
 
 function sourceClass(source: string) {
   return source.toLowerCase().replace(" discuss", "");
+}
+
+function commandIntent(value: string): CommandIntent {
+  const query = value.trim().toLowerCase();
+  if (!query) return "search";
+  if (/[?]$/.test(query)) return "companion";
+  if (/^(are|can|could|do|does|did|what|when|where|why|how|who|summari[sz]e|explain|draft|write|compose|catch|tell|help)\b/.test(query)) {
+    return "companion";
+  }
+  if (/\b(what needs|needs reply|open loops|break ?down|recap|catch me up|priority|priorities|risk|risks)\b/.test(query)) {
+    return "companion";
+  }
+  if (/\b(find|search|show|list|get|emails?|mails?|messages?|comms?|communications?|from|with|about)\b/.test(query)) {
+    return "search";
+  }
+  return "companion";
 }
 
 function sourceParam(mailbox: MailboxFilter) {
@@ -511,6 +529,7 @@ export default function Home() {
     const question = (promptOverride ?? assistantQuestion).trim();
     if (!question || assistantBusy) return;
 
+    setAssistantOpen(true);
     const nextHistory: AssistantMessage[] = [...assistantHistory, { role: "user", content: question }];
     setAssistantHistory(nextHistory);
     setAssistantQuestion("");
@@ -520,7 +539,7 @@ export default function Home() {
       const { data } = await getSupabaseBrowserClient().auth.getSession();
       if (!data.session) {
         setAssistantNeedsAuth(true);
-        throw new Error("Connect Microsoft 365 so Radar can read your private inbox context safely.");
+        throw new Error("Connect Microsoft 365 so AI companion can read your private inbox context safely.");
       }
       setAssistantNeedsAuth(false);
 
@@ -537,7 +556,7 @@ export default function Home() {
         }),
       });
       const payload = (await response.json()) as { answer?: string; error?: string; model?: string };
-      if (!response.ok) throw new Error(payload.error || "Radar assistant is unavailable.");
+      if (!response.ok) throw new Error(payload.error || "AI companion is unavailable.");
       setAssistantHistory([
         ...nextHistory,
         {
@@ -611,6 +630,14 @@ export default function Home() {
     try {
       const { data } = await getSupabaseBrowserClient().auth.getSession();
       if (!data.session) throw new Error("Connect Microsoft 365 before private inbox search can run.");
+
+      if (commandIntent(query) === "companion") {
+        setSearchNote(`AI companion is checking "${query}".`);
+        setSearchQuery("");
+        await askAssistant(undefined, query);
+        return;
+      }
+
       const liveMessages = await loadMailboxMessages(activeMailbox, query);
       setInboxMessages(liveMessages);
       if (liveMessages[0]) {
@@ -622,6 +649,13 @@ export default function Home() {
         liveMessages.length
           ? `Found ${liveMessages.length} imported inbox result${liveMessages.length === 1 ? "" : "s"} for "${query}".`
           : `No imported inbox results found for "${query}".`,
+      );
+      setAssistantOpen(true);
+      await askAssistant(
+        undefined,
+        liveMessages.length
+          ? `Break down the inbox search "${query}". Give me the main people, sources, dates, open loops, and best next options.`
+          : `I searched for "${query}" but found no imported inbox results. Suggest better searches or filters to try.`,
       );
     } catch (error) {
       setAppliedSearch(query);
@@ -845,7 +879,7 @@ export default function Home() {
                   </>
                 )}
                 <button type="button" onClick={() => setAssistantOpen(true)}>
-                  Open Radar
+                  Open AI companion
                 </button>
                 <span className={`source-glyph ${sourceClass(selectedMessage.source)}`} aria-hidden="true">
                   <PlatformIcon source={selectedMessage.source} />
@@ -876,10 +910,10 @@ export default function Home() {
             </div>
 
             {assistantOpen && (
-              <section className="assistant-chat copilot-panel" aria-label="Radar inbox assistant">
+              <section className="assistant-chat copilot-panel" aria-label="AI companion inbox assistant">
                 <header>
                   <div>
-                    <strong>Radar assistant</strong>
+                    <strong>AI companion</strong>
                     <small>{AI_MODEL_LABEL} · chat, search, summaries, drafts</small>
                   </div>
                   <button type="button" onClick={() => setAssistantOpen(false)}>
@@ -907,7 +941,7 @@ export default function Home() {
                 {assistantNeedsAuth && (
                   <div className="auth-needed-card">
                     <div>
-                      <strong>Connect before Radar reads inbox context</strong>
+                      <strong>Connect before AI companion reads inbox context</strong>
                       <p>
                         This keeps private Outlook, Teams, Odoo, and WhatsApp context behind your Supabase session.
                       </p>
@@ -920,7 +954,7 @@ export default function Home() {
 
                 <form className="assistant-input" onSubmit={(event) => void askAssistant(event)}>
                   <input
-                    aria-label="Ask Radar about your inbox"
+                    aria-label="Ask AI companion about your inbox"
                     value={assistantQuestion}
                     onChange={(event) => setAssistantQuestion(event.target.value)}
                     placeholder="Ask about this thread or your inbox…"
@@ -1099,7 +1133,7 @@ export default function Home() {
               aria-label="Mobile ask or search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Ask Radar"
+              placeholder="Ask AI companion"
             />
             <button type="submit">↗</button>
           </form>

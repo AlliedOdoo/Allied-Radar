@@ -1,6 +1,6 @@
 # Allied Radar
 
-Allied Radar is a three-panel unified inbox for Outlook, Teams, Odoo Discuss, and WhatsApp. Kimi K2.6 Free through OpenRouter handles search assistance and editable drafts. A separate authenticated connector layer handles outbound delivery only after an explicit final review.
+Allied Radar is a three-panel unified inbox for Outlook, Teams, Odoo Discuss, and WhatsApp. Kimi K2.6 through OpenRouter handles Copilot-style search assistance, summaries, and editable drafts when strict zero-retention/no-training routing is available. A separate authenticated connector layer handles outbound delivery only after an explicit final review.
 
 ## Run locally
 
@@ -17,7 +17,7 @@ The local `.env.local` has already been created from the owner's setup document.
 2. In Supabase Authentication > Sign In / Providers > Azure, enter the Microsoft application client ID and client secret, and set the Azure tenant URL for Allied Fibreglass.
 3. In Microsoft Entra > App registrations > Allied Radar > API permissions, add delegated Microsoft Graph permissions: `User.Read`, `Mail.Read`, `Mail.Send`, `Chat.Read`, and `ChatMessage.Send`, then grant admin consent if the tenant requires it.
 4. Add the Supabase service-role key to `.env.local`. This is server-only; do not use the publishable/anon key in its place.
-5. Create an OpenRouter API key and save it as `OPENROUTER_API_KEY`; the app requests `moonshotai/kimi-k2.6:free` only through providers that deny data collection and enforce zero retention. If no compliant endpoint is available, drafting fails closed.
+5. Create an OpenRouter API key and save it as `OPENROUTER_API_KEY`, set `ENABLE_EXTERNAL_AI=true`, and set `AI_MODEL=moonshotai/kimi-k2.6`; the app only routes through providers that deny data collection and enforce zero retention. If no compliant endpoint is available, AI falls back to the private local assistant instead of leaking data.
 6. Add a comma-separated allowlist of approved numeric Odoo Discuss channel IDs as `ODOO_DISCUSS_CHANNEL_IDS`. Odoo sync and sending remain unavailable without it.
 7. Use Connections in the app to sign in to Microsoft, sync Microsoft/Odoo, and create an Android pairing code.
 8. Install the Firebase-free companion APK for WhatsApp notification ingestion. To enable outbound phone handoff notifications, add Firebase server credentials plus Android `google-services.json`, then rebuild the push-enabled APK.
