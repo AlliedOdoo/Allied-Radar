@@ -266,6 +266,7 @@ export default function Home() {
   const [threadMessages, setThreadMessages] = useState<InboxMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
   const [replyMode, setReplyMode] = useState<"reply" | "reply_all">("reply");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   function parseAddressList(value: string) {
     return value
@@ -286,6 +287,17 @@ export default function Home() {
       })
       .filter((item): item is { name: string; value: string } => Boolean(item));
   }
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("allied-radar-theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("allied-radar-theme", theme);
+  }, [theme]);
 
   async function loadMailboxMessages(mailbox: MailboxFilter, query = "") {
     const { data } = await getSupabaseBrowserClient().auth.getSession();
@@ -621,7 +633,7 @@ export default function Home() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-theme={theme}>
       <div className="desktop-stage" aria-label="Allied Radar unified inbox">
         <div className="sr-only">
           Mailbox navigation. Latest across every inbox. AI workspace. AI draft / human send. Kimi K2.6 Free.
@@ -646,6 +658,15 @@ export default function Home() {
               </button>
             ))}
           </nav>
+          <button
+            className="theme-toggle"
+            type="button"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? "☀" : "☾"}
+          </button>
           <button
             className="rail-avatar"
             type="button"

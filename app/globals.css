@@ -81,6 +81,32 @@ button {
   padding: 0;
 }
 
+.app-shell[data-theme="dark"] {
+  --bg: #0f1115;
+  --paper: #171a20;
+  --paper-soft: rgba(23, 26, 32, 0.9);
+  --ink: #f4f5f7;
+  --muted: #b1b7c2;
+  --faint: #78808d;
+  --line: #2a2f38;
+  --line-strong: #3a414d;
+  --accent: #8ea2ff;
+  --accent-soft: rgba(142, 162, 255, 0.1);
+  --accent-hover: rgba(142, 162, 255, 0.16);
+  --danger: #e0807b;
+  --shadow-soft: 0 18px 52px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 10px 26px rgba(0, 0, 0, 0.24);
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(142, 162, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(142, 162, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 12% 18%, rgba(55, 42, 70, 0.58), transparent 28rem),
+    radial-gradient(circle at 86% 10%, rgba(35, 55, 72, 0.65), transparent 26rem),
+    linear-gradient(135deg, #101116 0%, #13161d 48%, #0e1418 100%);
+  background-size: 24px 24px, 24px 24px, auto, auto, auto;
+  color-scheme: dark;
+}
+
 .desktop-stage {
   display: grid;
   grid-template-columns: 78px minmax(190px, 220px) minmax(300px, 350px) minmax(720px, 1fr);
@@ -146,6 +172,24 @@ button {
   color: var(--muted);
   font-size: 13px;
   font-weight: 500;
+}
+
+.theme-toggle {
+  display: grid;
+  width: 58px;
+  height: 42px;
+  place-items: center;
+  margin-top: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button);
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.theme-toggle + .rail-avatar {
+  margin-top: 10px;
 }
 
 .rail-button.active {
@@ -1906,6 +1950,138 @@ a,
 .rail-button.active .source-glyph,
 .bottom-tabs button.active .source-glyph {
   color: #fff;
+}
+
+.platform-rail .source-glyph {
+  width: 46px;
+  height: 46px;
+  background: transparent;
+  color: currentColor;
+}
+
+.platform-rail .source-glyph svg {
+  width: 32px;
+  height: 32px;
+  filter: saturate(1.18) contrast(1.12);
+}
+
+.platform-rail .rail-button:not(.active) .source-glyph.whatsapp { color: #159f52; }
+.platform-rail .rail-button:not(.active) .source-glyph.outlook { color: #1d72b8; }
+.platform-rail .rail-button:not(.active) .source-glyph.teams { color: #555bb0; }
+.platform-rail .rail-button:not(.active) .source-glyph.odoo { color: #6e4a68; }
+
+.app-shell[data-theme="dark"] .platform-rail,
+.app-shell[data-theme="dark"] .folder-sidebar,
+.app-shell[data-theme="dark"] .inbox-window,
+.app-shell[data-theme="dark"] .thread-card,
+.app-shell[data-theme="dark"] .connection-center,
+.app-shell[data-theme="dark"] .confirmation-dialog,
+.app-shell[data-theme="dark"] .compose-dialog,
+.app-shell[data-theme="dark"] .mobile-header,
+.app-shell[data-theme="dark"] .mobile-row,
+.app-shell[data-theme="dark"] .bottom-tabs {
+  background: var(--paper-soft);
+  border-color: var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+.app-shell[data-theme="dark"] .platform-rail {
+  background: rgba(18, 21, 28, 0.92);
+}
+
+.app-shell[data-theme="dark"] .folder-sidebar {
+  background: rgba(20, 24, 32, 0.9);
+}
+
+.app-shell[data-theme="dark"] .ask-bar,
+.app-shell[data-theme="dark"] .inbox-title-actions button,
+.app-shell[data-theme="dark"] .inbox-title-actions span,
+.app-shell[data-theme="dark"] .folder-primary,
+.app-shell[data-theme="dark"] .message-row:hover,
+.app-shell[data-theme="dark"] .message-row.selected,
+.app-shell[data-theme="dark"] .bubble,
+.app-shell[data-theme="dark"] .assistant-note,
+.app-shell[data-theme="dark"] .assistant-chat,
+.app-shell[data-theme="dark"] .assistant-bubble,
+.app-shell[data-theme="dark"] .connection-item,
+.app-shell[data-theme="dark"] .health-row,
+.app-shell[data-theme="dark"] .send-feedback,
+.app-shell[data-theme="dark"] .connector-state,
+.app-shell[data-theme="dark"] .compose-provider-picker button,
+.app-shell[data-theme="dark"] .quick-prompts button,
+.app-shell[data-theme="dark"] .draft-actions button,
+.app-shell[data-theme="dark"] .secondary-action,
+.app-shell[data-theme="dark"] .dialog-close,
+.app-shell[data-theme="dark"] .theme-toggle,
+.app-shell[data-theme="dark"] .rail-avatar {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.app-shell[data-theme="dark"] .thread-header {
+  background: rgba(18, 21, 28, 0.74);
+  border-color: var(--line);
+}
+
+.app-shell[data-theme="dark"] .ask-bar input,
+.app-shell[data-theme="dark"] .assistant-input input,
+.app-shell[data-theme="dark"] .send-composer textarea,
+.app-shell[data-theme="dark"] .compose-input input,
+.app-shell[data-theme="dark"] .compose-input textarea,
+.app-shell[data-theme="dark"] .reply-composer textarea {
+  background: transparent;
+  color: var(--ink);
+}
+
+.app-shell[data-theme="dark"] .source-glyph {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app-shell[data-theme="dark"] .platform-rail .source-glyph {
+  background: transparent;
+}
+
+.app-shell[data-theme="dark"] .rail-brand,
+.app-shell[data-theme="dark"] .rail-button.active,
+.app-shell[data-theme="dark"] .reply-mode-tabs button.active,
+.app-shell[data-theme="dark"] .send-review-action,
+.app-shell[data-theme="dark"] .send-now-action,
+.app-shell[data-theme="dark"] .primary-button,
+.app-shell[data-theme="dark"] .assistant-input button,
+.app-shell[data-theme="dark"] .auth-needed-card button,
+.app-shell[data-theme="dark"] .compose-provider-picker button.active,
+.app-shell[data-theme="dark"] .bottom-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #111522;
+}
+
+.app-shell[data-theme="dark"] .assistant-bubble.user {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #111522;
+}
+
+.app-shell[data-theme="dark"] .thread-header-actions button {
+  background: transparent;
+  color: var(--muted);
+}
+
+.app-shell[data-theme="dark"] .thread-header-actions button:not(.secondary-action) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #111522;
+}
+
+.app-shell[data-theme="dark"] .source-glyph.whatsapp { color: #46d181; }
+.app-shell[data-theme="dark"] .source-glyph.outlook { color: #69aee8; }
+.app-shell[data-theme="dark"] .source-glyph.teams { color: #9296ee; }
+.app-shell[data-theme="dark"] .source-glyph.odoo { color: #c290b7; }
+
+.app-shell[data-theme="dark"] .rail-button.active .source-glyph,
+.app-shell[data-theme="dark"] .bottom-tabs button.active .source-glyph {
+  color: #111522;
 }
 
 .mobile-shell {
