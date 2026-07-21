@@ -225,6 +225,10 @@ export function ConnectionCenter({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="connection-actions">
+          <button className="secondary-action" onClick={() => window.location.assign("/setup")} type="button">
+            Open full setup
+          </button>
+
           <button className="send-review-action" onClick={connectMicrosoft} type="button">
             Connect Microsoft 365
           </button>

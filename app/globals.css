@@ -2114,6 +2114,205 @@ a,
   display: none;
 }
 
+.setup-shell {
+  min-height: 100vh;
+  overflow-y: auto;
+  background:
+    linear-gradient(rgba(30, 110, 120, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 110, 120, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 18% 12%, rgba(236, 242, 255, 0.95), transparent 30rem),
+    linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  background-size: 24px 24px, 24px 24px, auto, auto;
+  color: var(--ink);
+  padding: 28px;
+}
+
+.setup-hero,
+.setup-progress,
+.setup-card,
+.setup-message {
+  width: min(1180px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow-soft);
+}
+
+.setup-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 28px;
+}
+
+.setup-hero h1 {
+  max-width: 760px;
+  margin: 6px 0 10px;
+  font-size: clamp(34px, 5vw, 58px);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+}
+
+.setup-hero span {
+  display: block;
+  max-width: 680px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.setup-hero-actions,
+.setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setup-progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.setup-progress span {
+  display: grid;
+  gap: 6px;
+  background: rgba(248, 249, 252, 0.9);
+  color: var(--muted);
+  padding: 13px;
+  font-size: 12px;
+}
+
+.setup-progress small {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: var(--radius-small);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.setup-message {
+  margin-top: 14px;
+  color: var(--ink);
+  padding: 13px 16px;
+  font-size: 14px;
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: min(1180px, 100%);
+  margin: 14px auto 0;
+}
+
+.setup-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 280px;
+  padding: 20px;
+}
+
+.setup-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.setup-card-heading span {
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.setup-card-heading strong {
+  border: 1px solid rgba(59, 91, 219, 0.16);
+  border-radius: var(--radius-button);
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.setup-card h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.setup-card p,
+.setup-card small,
+.setup-muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.setup-card dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.setup-card dl div,
+.setup-health-list div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.setup-card dt {
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.setup-card dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.ai-privacy-card {
+  border-color: rgba(184, 74, 68, 0.18);
+  background: linear-gradient(135deg, rgba(184, 74, 68, 0.04), rgba(255, 255, 255, 0.88));
+}
+
+.health-card {
+  min-height: 320px;
+}
+
+.setup-health-list {
+  display: grid;
+  gap: 8px;
+}
+
+.setup-health-list div {
+  grid-template-columns: 120px minmax(0, 1fr);
+}
+
+.setup-health-list span,
+.setup-health-list small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 @media (max-width: 1320px) {
   .desktop-stage {
     grid-template-columns: 76px minmax(280px, 330px) minmax(680px, 1fr);
@@ -2128,6 +2327,29 @@ a,
 @media (max-width: 1080px) {
   body {
     overflow: auto;
+  }
+
+  .setup-shell {
+    padding: 14px;
+  }
+
+  .setup-hero {
+    display: grid;
+    padding: 20px;
+  }
+
+  .setup-hero h1 {
+    font-size: 34px;
+  }
+
+  .setup-progress,
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-card dl div,
+  .setup-health-list div {
+    grid-template-columns: 1fr;
   }
 
   .app-shell {
