@@ -17,6 +17,9 @@ type MessageRow = {
   received_at: string | null;
   sent_at: string | null;
   is_read: boolean;
+  is_flagged: boolean;
+  mail_folder?: string | null;
+  provider_state?: Record<string, unknown> | null;
   local_status?: string | null;
   opened_at?: string | null;
   acknowledged_at?: string | null;
@@ -29,9 +32,13 @@ export async function GET(request: Request) {
     const { user, accessToken } = await requireSupabaseUser(request);
     const url = new URL(request.url);
     const source = url.searchParams.get("source");
+    const folder = url.searchParams.get("folder")?.trim();
     const query = url.searchParams.get("query")?.trim();
     const supported = new Set(["outlook", "teams", "odoo_discuss", "whatsapp", "mobile_notification"]);
     const sourceFilter = source && supported.has(source) ? `&source=eq.${postgrestValue(source)}` : "";
+    const folderFilter = folder ? `&mail_folder=eq.${postgrestValue(folder)}` : "";
+    const unreadFilter = url.searchParams.get("unread") === "true" ? "&is_read=eq.false" : "";
+    const flaggedFilter = url.searchParams.get("flagged") === "true" ? "&is_flagged=eq.true" : "";
     const queryFilter = query
       ? `&or=(${[
           `subject.ilike.*${postgrestValue(query)}*`,
@@ -40,7 +47,7 @@ export async function GET(request: Request) {
         ].join(",")})`
       : "";
     const rows = await supabaseRest<MessageRow[]>(
-      `/rest/v1/messages?user_id=eq.${postgrestValue(user.id)}${sourceFilter}${queryFilter}&deleted_at=is.null&select=id,source,source_type,external_id,external_thread_id,sender,subject,preview,body_text,received_at,sent_at,is_read,local_status,opened_at,acknowledged_at,importance,ai_reason&order=received_at.desc.nullslast,created_at.desc&limit=100`,
+      `/rest/v1/messages?user_id=eq.${postgrestValue(user.id)}${sourceFilter}${folderFilter}${unreadFilter}${flaggedFilter}${queryFilter}&deleted_at=is.null&select=id,source,source_type,external_id,external_thread_id,sender,subject,preview,body_text,received_at,sent_at,is_read,is_flagged,mail_folder,provider_state,local_status,opened_at,acknowledged_at,importance,ai_reason&order=received_at.desc.nullslast,sent_at.desc.nullslast,created_at.desc&limit=150`,
       { method: "GET" },
       { accessToken },
     );

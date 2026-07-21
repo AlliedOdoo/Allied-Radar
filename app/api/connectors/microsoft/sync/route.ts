@@ -21,9 +21,14 @@ type GraphMail = {
   lastModifiedDateTime?: string;
   isRead?: boolean;
   importance?: "low" | "normal" | "high";
+  hasAttachments?: boolean;
+  categories?: string[];
   webLink?: string;
+  flag?: { flagStatus?: "notFlagged" | "flagged" | "complete" };
   from?: { emailAddress?: { name?: string; address?: string } };
   toRecipients?: Array<{ emailAddress?: { name?: string; address?: string } }>;
+  ccRecipients?: Array<{ emailAddress?: { name?: string; address?: string } }>;
+  bccRecipients?: Array<{ emailAddress?: { name?: string; address?: string } }>;
 };
 type GraphChat = {
   id?: string;
@@ -75,6 +80,64 @@ async function graphGetPaged<T>(
   return items.slice(0, maxItems);
 }
 
+const OUTLOOK_FOLDERS = [
+  { id: "inbox", label: "Inbox", folder: "inbox" },
+  { id: "sentitems", label: "Sent Items", folder: "sent" },
+  { id: "drafts", label: "Drafts", folder: "drafts" },
+  { id: "archive", label: "Archive", folder: "archive" },
+  { id: "deleteditems", label: "Deleted Items", folder: "deleted" },
+  { id: "junkemail", label: "Junk Email", folder: "junk" },
+  { id: "outbox", label: "Outbox", folder: "outbox" },
+] as const;
+
+function emailAddresses(entries: Array<{ emailAddress?: { name?: string; address?: string } }> = []) {
+  return entries.map((entry) => ({
+    name: entry.emailAddress?.name ?? null,
+    address: entry.emailAddress?.address ?? null,
+  }));
+}
+
+function normalizeGraphMail(
+  item: GraphMail,
+  userId: string,
+  connectionId: string | undefined,
+  folder: (typeof OUTLOOK_FOLDERS)[number],
+): NormalizedMessage | null {
+  if (!item.id) return null;
+  const sender = item.from?.emailAddress ?? {};
+  const preview = plainText(item.bodyPreview, 500);
+  return {
+    user_id: userId,
+    connection_id: connectionId,
+    source: "outlook",
+    source_type: "email",
+    external_id: item.id,
+    external_thread_id: item.conversationId ?? null,
+    folder_or_channel_id: folder.id,
+    folder_or_channel_name: folder.label,
+    mail_folder: folder.folder,
+    provider_state: {
+      graphFolderId: folder.id,
+      graphFolderName: folder.label,
+      categories: item.categories ?? [],
+      flagStatus: item.flag?.flagStatus ?? "notFlagged",
+    },
+    sender: { name: sender.name ?? sender.address ?? "Unknown sender", address: sender.address ?? null },
+    recipients: emailAddresses(item.toRecipients),
+    subject: item.subject ?? "(No subject)",
+    body_text: plainText(item.bodyPreview),
+    preview,
+    received_at: item.receivedDateTime ?? item.sentDateTime ?? null,
+    sent_at: item.sentDateTime ?? item.receivedDateTime ?? null,
+    external_updated_at: item.lastModifiedDateTime ?? null,
+    is_read: Boolean(item.isRead),
+    is_flagged: item.flag?.flagStatus === "flagged",
+    importance: item.importance ?? "normal",
+    has_attachments: Boolean(item.hasAttachments),
+    source_permalink: item.webLink ?? null,
+  };
+}
+
 export async function POST(request: Request) {
   let runId: string | null = null;
   let runUserId: string | null = null;
@@ -95,7 +158,7 @@ export async function POST(request: Request) {
     const mailLimit = Number(process.env.MICROSOFT_BACKFILL_MAIL_LIMIT ?? "1000");
     const chatLimit = Number(process.env.MICROSOFT_BACKFILL_CHAT_LIMIT ?? "50");
     const chatMessagesPerChat = Number(process.env.MICROSOFT_BACKFILL_CHAT_MESSAGES_PER_CHAT ?? "25");
-    const mailPath = "/me/messages?$top=50&$select=id,conversationId,subject,bodyPreview,receivedDateTime,sentDateTime,lastModifiedDateTime,isRead,importance,webLink,from,toRecipients&$orderby=receivedDateTime%20desc";
+    const mailSelect = "id,conversationId,subject,bodyPreview,receivedDateTime,sentDateTime,lastModifiedDateTime,isRead,importance,hasAttachments,categories,webLink,flag,from,toRecipients,ccRecipients,bccRecipients";
     const chatsPath = "/me/chats?$top=50&$expand=lastMessagePreview";
 
     const normalized: NormalizedMessage[] = [];
@@ -109,32 +172,22 @@ export async function POST(request: Request) {
     ]);
     if (outlookResult[0]?.status === "fulfilled") {
       try {
-        mailItems = await graphGetPaged<GraphMail>(outlookResult[0].value, mailPath, mailLimit);
-        for (const item of mailItems) {
-          if (!item.id) continue;
-          const sender = item.from?.emailAddress ?? {};
-          normalized.push({
-            user_id: user.id,
-            connection_id: ids.get("outlook"),
-            source: "outlook",
-            source_type: "email",
-            external_id: item.id,
-            external_thread_id: item.conversationId ?? null,
-            sender: { name: sender.name ?? sender.address ?? "Unknown sender", address: sender.address ?? null },
-            recipients: (item.toRecipients ?? []).map((entry) => ({
-              name: entry.emailAddress?.name ?? null,
-              address: entry.emailAddress?.address ?? null,
-            })),
-            subject: item.subject ?? "(No subject)",
-            body_text: plainText(item.bodyPreview),
-            preview: plainText(item.bodyPreview, 500),
-            received_at: item.receivedDateTime ?? null,
-            sent_at: item.sentDateTime ?? null,
-            external_updated_at: item.lastModifiedDateTime ?? null,
-            is_read: Boolean(item.isRead),
-            importance: item.importance ?? "normal",
-            source_permalink: item.webLink ?? null,
-          });
+        const perFolderLimit = Math.max(25, Math.ceil(mailLimit / OUTLOOK_FOLDERS.length));
+        for (const folder of OUTLOOK_FOLDERS) {
+          const orderField =
+            folder.folder === "drafts" || folder.folder === "outbox"
+              ? "lastModifiedDateTime"
+              : folder.folder === "sent"
+                ? "sentDateTime"
+                : "receivedDateTime";
+          const folderPath =
+            `/me/mailFolders/${folder.id}/messages?$top=50&$select=${mailSelect}&$orderby=${orderField}%20desc`;
+          const folderItems = await graphGetPaged<GraphMail>(outlookResult[0].value, folderPath, perFolderLimit);
+          mailItems.push(...folderItems);
+          for (const item of folderItems) {
+            const normalizedMail = normalizeGraphMail(item, user.id, ids.get("outlook"), folder);
+            if (normalizedMail) normalized.push(normalizedMail);
+          }
         }
       } catch (error) {
         errors.push({

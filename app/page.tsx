@@ -7,7 +7,21 @@ import { getSupabaseBrowserClient, MICROSOFT_GRAPH_SCOPES } from "../lib/supabas
 import { ConnectionCenter } from "./components/connection-center";
 import { SendComposer } from "./components/send-composer";
 
-type MailboxFilter = "All mailboxes" | "WhatsApp" | "Outlook" | "Teams" | "Odoo Discuss";
+type MailboxFilter =
+  | "All mailboxes"
+  | "WhatsApp"
+  | "Outlook"
+  | "Teams"
+  | "Odoo Discuss"
+  | "Inbox"
+  | "Sent"
+  | "Drafts"
+  | "Archive"
+  | "Deleted"
+  | "Junk"
+  | "Outbox"
+  | "Flagged"
+  | "Unread";
 type ProviderName = "Outlook" | "Teams" | "Odoo Discuss" | "WhatsApp";
 
 type AssistantMessage = {
@@ -29,6 +43,9 @@ type StoredMessage = {
   received_at: string | null;
   sent_at: string | null;
   is_read: boolean;
+  is_flagged: boolean;
+  mail_folder?: string | null;
+  provider_state?: Record<string, unknown> | null;
   local_status?: string | null;
   opened_at?: string | null;
   acknowledged_at?: string | null;
@@ -50,6 +67,18 @@ const mailboxOptions: Array<{
   { label: "Outlook", icon: "✉", className: "outlook" },
   { label: "Teams", icon: "T", className: "teams" },
   { label: "Odoo Discuss", icon: "O", className: "odoo" },
+];
+
+const outlookFolderOptions: Array<{ label: MailboxFilter; folder?: string; flagged?: boolean; unread?: boolean }> = [
+  { label: "Inbox", folder: "inbox" },
+  { label: "Sent", folder: "sent" },
+  { label: "Drafts", folder: "drafts" },
+  { label: "Archive", folder: "archive" },
+  { label: "Deleted", folder: "deleted" },
+  { label: "Junk", folder: "junk" },
+  { label: "Outbox", folder: "outbox" },
+  { label: "Flagged", flagged: true },
+  { label: "Unread", unread: true },
 ];
 
 const sourceLabels = {
@@ -94,6 +123,18 @@ function sourceParam(mailbox: MailboxFilter) {
   if (mailbox === "Odoo Discuss") return "odoo_discuss";
   if (mailbox === "WhatsApp") return "whatsapp";
   return null;
+}
+
+function folderParam(mailbox: MailboxFilter) {
+  return outlookFolderOptions.find((item) => item.label === mailbox)?.folder ?? null;
+}
+
+function isFlaggedView(mailbox: MailboxFilter) {
+  return outlookFolderOptions.find((item) => item.label === mailbox)?.flagged === true;
+}
+
+function isUnreadView(mailbox: MailboxFilter) {
+  return outlookFolderOptions.find((item) => item.label === mailbox)?.unread === true;
 }
 
 function sendProvider(source: string): ProviderName | null {
@@ -181,6 +222,9 @@ function toInboxMessage(message: StoredMessage) {
     detail: message.body_text || summary,
     priority: message.importance === "high" ? "high" : "medium",
     status: message.is_read ? "Read" : "Unread",
+    isRead: message.is_read,
+    isFlagged: message.is_flagged,
+    mailFolder: message.mail_folder || "inbox",
     localStatus: message.local_status || "unhandled",
     dateGroup: "Today",
     displayDate: date.toLocaleDateString("en-ZA", { day: "2-digit", month: "short", year: "numeric" }),
@@ -247,8 +291,20 @@ export default function Home() {
     const { data } = await getSupabaseBrowserClient().auth.getSession();
     if (!data.session) throw new Error("Connect Microsoft 365 before loading private inbox data.");
     const source = sourceParam(mailbox);
+    const folder = folderParam(mailbox);
     const params = new URLSearchParams();
     if (source) params.set("source", source);
+    if (folder) {
+      params.set("source", "outlook");
+      params.set("folder", folder);
+    }
+    if (isFlaggedView(mailbox)) {
+      params.set("source", "outlook");
+      params.set("flagged", "true");
+    }
+    if (isUnreadView(mailbox)) {
+      params.set("unread", "true");
+    }
     if (query.trim()) params.set("query", query.trim());
     const suffix = params.toString();
     const response = await fetch(`/api/inbox${suffix ? `?${suffix}` : ""}`, {
@@ -307,6 +363,46 @@ export default function Home() {
     }
   }
 
+  async function runMessageAction(
+    message: InboxMessage,
+    action: "mark_read" | "mark_unread" | "flag" | "unflag" | "archive" | "delete",
+  ) {
+    try {
+      const { data } = await getSupabaseBrowserClient().auth.getSession();
+      if (!data.session) throw new Error("Connect Microsoft 365 before using mail actions.");
+      const response = await fetch("/api/messages/actions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${data.session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messageId: message.id, action }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Message action failed.");
+      const folderPatch =
+        action === "archive" ? { mailFolder: "archive" } :
+        action === "delete" ? { mailFolder: "deleted" } :
+        {};
+      setInboxMessages((current) =>
+        current.map((item) =>
+          item.id === message.id
+            ? {
+                ...item,
+                ...folderPatch,
+                isRead: action === "mark_read" ? true : action === "mark_unread" ? false : item.isRead,
+                status: action === "mark_read" ? "Read" : action === "mark_unread" ? "Unread" : item.status,
+                isFlagged: action === "flag" ? true : action === "unflag" ? false : item.isFlagged,
+              }
+            : item,
+        ),
+      );
+      setSearchNote(`Outlook ${action.replace("_", " ")} completed.`);
+    } catch (error) {
+      setSearchNote(error instanceof Error ? error.message : "Message action failed.");
+    }
+  }
+
   useEffect(() => {
     let active = true;
     async function loadInbox() {
@@ -332,7 +428,15 @@ export default function Home() {
     const mailboxMessages =
       activeMailbox === "All mailboxes"
         ? inboxMessages
-        : inboxMessages.filter((message) => message.source === activeMailbox);
+        : sourceParam(activeMailbox)
+          ? inboxMessages.filter((message) => message.source === activeMailbox)
+          : folderParam(activeMailbox)
+            ? inboxMessages.filter((message) => message.source === "Outlook" && message.mailFolder === folderParam(activeMailbox))
+            : isFlaggedView(activeMailbox)
+              ? inboxMessages.filter((message) => message.source === "Outlook" && message.isFlagged)
+              : isUnreadView(activeMailbox)
+                ? inboxMessages.filter((message) => !message.isRead)
+                : inboxMessages;
     const query = appliedSearch.trim().toLowerCase();
     if (!query) return mailboxMessages;
     return mailboxMessages.filter((message) =>
@@ -579,6 +683,19 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="folder-strip" aria-label="Outlook folders">
+            {outlookFolderOptions.map((folder) => (
+              <button
+                className={activeMailbox === folder.label ? "active" : ""}
+                key={folder.label}
+                type="button"
+                onClick={() => void selectMailbox(folder.label)}
+              >
+                {folder.label}
+              </button>
+            ))}
+          </div>
+
           {searchNote && <p className="search-note">{searchNote}</p>}
 
           <div className="message-list" aria-label={`${activeMailbox} messages`}>
@@ -604,7 +721,11 @@ export default function Home() {
                         <time dateTime={message.receivedAt}>{message.displayTime}</time>
                       </span>
                       <span className="row-summary">{message.summary}</span>
-                      <span className="row-source">{message.source}</span>
+                      <span className="row-source">
+                        {message.source}
+                        {message.source === "Outlook" ? ` · ${message.mailFolder}` : ""}
+                        {message.isFlagged ? " · flagged" : ""}
+                      </span>
                     </span>
                     <span className={`source-glyph ${sourceClass(message.source)}`} aria-label={message.source}>
                       <PlatformIcon source={message.source} />
@@ -651,6 +772,30 @@ export default function Home() {
                 <button type="button" className="secondary-action" onClick={() => void markLocalMessage(selectedMessage, "acknowledge")}>
                   Mark handled
                 </button>
+                {selectedMessage.source === "Outlook" && (
+                  <>
+                    <button
+                      type="button"
+                      className="secondary-action"
+                      onClick={() => void runMessageAction(selectedMessage, selectedMessage.isRead ? "mark_unread" : "mark_read")}
+                    >
+                      {selectedMessage.isRead ? "Mark unread" : "Mark read"}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-action"
+                      onClick={() => void runMessageAction(selectedMessage, selectedMessage.isFlagged ? "unflag" : "flag")}
+                    >
+                      {selectedMessage.isFlagged ? "Unflag" : "Flag"}
+                    </button>
+                    <button type="button" className="secondary-action" onClick={() => void runMessageAction(selectedMessage, "archive")}>
+                      Archive
+                    </button>
+                    <button type="button" className="secondary-action danger" onClick={() => void runMessageAction(selectedMessage, "delete")}>
+                      Delete
+                    </button>
+                  </>
+                )}
                 <button type="button" onClick={() => setAssistantOpen(true)}>
                   Open Radar
                 </button>

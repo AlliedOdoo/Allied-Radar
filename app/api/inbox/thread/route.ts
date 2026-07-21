@@ -20,6 +20,9 @@ type MessageRow = {
   received_at: string | null;
   sent_at: string | null;
   is_read: boolean;
+  is_flagged: boolean;
+  mail_folder?: string | null;
+  provider_state?: Record<string, unknown> | null;
   local_status?: string | null;
   opened_at?: string | null;
   acknowledged_at?: string | null;
@@ -28,7 +31,7 @@ type MessageRow = {
 };
 
 const SELECT =
-  "id,source,source_type,external_id,external_thread_id,sender,recipients,participants,subject,preview,body_text,received_at,sent_at,is_read,local_status,opened_at,acknowledged_at,importance,ai_reason";
+  "id,source,source_type,external_id,external_thread_id,sender,recipients,participants,subject,preview,body_text,received_at,sent_at,is_read,is_flagged,mail_folder,provider_state,local_status,opened_at,acknowledged_at,importance,ai_reason";
 
 export async function GET(request: Request) {
   try {

@@ -32,7 +32,7 @@ export const MICROSOFT_GRAPH_SCOPES = [
   "openid",
   "profile",
   "offline_access",
-  "Mail.Read",
+  "Mail.ReadWrite",
   "Mail.Send",
   "Chat.Read",
   "ChatMessage.Send",
@@ -43,6 +43,6 @@ export const MICROSOFT_GRAPH_READ_SCOPES = [
   "openid",
   "profile",
   "offline_access",
-  "Mail.Read",
+  "Mail.ReadWrite",
   "Chat.Read",
 ].join(" ");

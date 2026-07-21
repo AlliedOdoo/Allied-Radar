@@ -9,6 +9,8 @@ export type NormalizedMessage = {
   external_thread_id?: string | null;
   folder_or_channel_id?: string | null;
   folder_or_channel_name?: string | null;
+  mail_folder?: string;
+  provider_state?: Record<string, unknown>;
   sender?: Record<string, unknown>;
   recipients?: Record<string, unknown>[];
   subject?: string | null;
@@ -18,7 +20,10 @@ export type NormalizedMessage = {
   received_at?: string | null;
   external_updated_at?: string | null;
   is_read?: boolean;
+  is_flagged?: boolean;
   importance?: "low" | "normal" | "high";
+  has_attachments?: boolean;
+  attachments?: Record<string, unknown>[];
   source_permalink?: string | null;
 };
 
@@ -51,6 +56,8 @@ export async function upsertNormalizedMessages(messages: NormalizedMessage[]) {
     parent_external_id: null,
     folder_or_channel_id: message.folder_or_channel_id ?? null,
     folder_or_channel_name: message.folder_or_channel_name ?? null,
+    mail_folder: message.mail_folder ?? "inbox",
+    provider_state: message.provider_state ?? {},
     sender: message.sender ?? {},
     recipients: message.recipients ?? [],
     participants: [],
@@ -64,10 +71,10 @@ export async function upsertNormalizedMessages(messages: NormalizedMessage[]) {
     external_updated_at: message.external_updated_at ?? null,
     deleted_at: null,
     is_read: message.is_read ?? false,
-    is_flagged: false,
+    is_flagged: message.is_flagged ?? false,
     importance: message.importance ?? "normal",
-    has_attachments: false,
-    attachments: [],
+    has_attachments: message.has_attachments ?? false,
+    attachments: message.attachments ?? [],
     source_permalink: message.source_permalink ?? null,
     raw_payload: null,
     raw_payload_ref: null,
