@@ -271,7 +271,7 @@ async function sendOutlook(message: OutboundMessage, token: string): Promise<Sen
   const recipients = (addresses: string[] = []) =>
     addresses.map((address) => ({ emailAddress: { address } }));
 
-  if (message.replyToId && (message.cc?.length || message.bcc?.length)) {
+  if (message.replyToId && (message.replyMode !== "reply_all" || message.cc?.length || message.bcc?.length)) {
     const createReplyUrl = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(message.replyToId)}/${message.replyMode === "reply_all" ? "createReplyAll" : "createReply"}`;
     const createResponse = await fetch(createReplyUrl, {
       method: "POST",
@@ -296,6 +296,7 @@ async function sendOutlook(message: OutboundMessage, token: string): Promise<Sen
       },
       body: JSON.stringify({
         body: { contentType: "Text", content: message.content },
+        ...(message.replyMode !== "reply_all" ? { toRecipients: recipients([message.destination]) } : {}),
         ...(message.cc?.length ? { ccRecipients: recipients(message.cc) } : {}),
         ...(message.bcc?.length ? { bccRecipients: recipients(message.bcc) } : {}),
       }),

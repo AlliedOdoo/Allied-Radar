@@ -2029,9 +2029,35 @@ a,
 .app-shell[data-theme="dark"] .send-composer textarea,
 .app-shell[data-theme="dark"] .compose-input input,
 .app-shell[data-theme="dark"] .compose-input textarea,
-.app-shell[data-theme="dark"] .reply-composer textarea {
+.app-shell[data-theme="dark"] .reply-composer textarea,
+.app-shell[data-theme="dark"] .composer-field strong,
+.app-shell[data-theme="dark"] .send-review-grid dd,
+.app-shell[data-theme="dark"] .send-preview,
+.app-shell[data-theme="dark"] .review-check,
+.app-shell[data-theme="dark"] .confirmation-heading h3,
+.app-shell[data-theme="dark"] .compose-dialog h3 {
   background: transparent;
   color: var(--ink);
+}
+
+.app-shell[data-theme="dark"] .send-review-grid dt,
+.app-shell[data-theme="dark"] .composer-field small,
+.app-shell[data-theme="dark"] .composer-field span,
+.app-shell[data-theme="dark"] .compose-input span,
+.app-shell[data-theme="dark"] .inline-compose-input span,
+.app-shell[data-theme="dark"] .section-heading small {
+  color: var(--muted);
+}
+
+.app-shell[data-theme="dark"] .send-preview,
+.app-shell[data-theme="dark"] .attachment-picker {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.app-shell[data-theme="dark"] input::placeholder,
+.app-shell[data-theme="dark"] textarea::placeholder {
+  color: var(--faint);
 }
 
 .app-shell[data-theme="dark"] .source-glyph {

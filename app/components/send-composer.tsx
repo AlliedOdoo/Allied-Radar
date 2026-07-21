@@ -131,7 +131,7 @@ export function SendComposer({
     () => status?.providers.find((item) => item.provider === provider),
     [provider, status],
   );
-  const canEditDestination = provider === "Outlook" && !replyToId;
+  const canEditDestination = provider === "Outlook" && (!replyToId || replyMode !== "reply_all");
   const canEditCcBcc = provider === "Outlook";
   const canEditHeaders = provider === "Outlook" && !replyToId;
   const effectiveDestination = canEditDestination ? destinationValue.trim() : destination;
@@ -168,14 +168,14 @@ export function SendComposer({
       const payload = (await response.json().catch(() => ({}))) as { draft?: { content?: string; destination?: string | null; subject?: string | null; updated_at?: string } | null };
       if (!active || !response.ok || !payload.draft?.content) return;
       setContent(payload.draft.content);
-      if (payload.draft.destination && !replyToId) setDestinationValue(payload.draft.destination);
+      if (payload.draft.destination && canEditDestination) setDestinationValue(payload.draft.destination);
       setDraftSavedAt(payload.draft.updated_at ?? null);
     }
     void loadDraft();
     return () => {
       active = false;
     };
-  }, [draftKey, provider, replyMode, replyToId]);
+  }, [canEditDestination, draftKey, provider, replyMode]);
 
   useEffect(() => {
     if (!draftKey) return;
