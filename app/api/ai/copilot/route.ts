@@ -111,6 +111,33 @@ function searchFilter(query: string) {
   return `&or=(${filters.join(",")})`;
 }
 
+function searchableText(message: MessageRow) {
+  return [
+    message.subject,
+    message.preview,
+    message.body_text,
+    message.ai_reason,
+    message.sender?.name,
+    message.sender?.address,
+    message.sender?.phone,
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function strictTermMatches(messages: MessageRow[], query: string) {
+  const terms = searchTerms(query);
+  if (terms.length < 2) return messages;
+  const loweredTerms = terms.map((term) => term.toLowerCase());
+  const allTermMatches = messages.filter((message) => {
+    const text = searchableText(message);
+    return loweredTerms.every((term) => text.includes(term));
+  });
+  return allTermMatches.length ? allTermMatches : messages;
+}
+
+function isGlobalSearchQuestion(query: string) {
+  return /\b(find|search|show|list|get)\b/i.test(query) || /\b(comms?|communications?|emails?|messages?)\b/i.test(query);
+}
+
 function evidenceFromMessage(message: MessageRow, index: number) {
   return {
     ref: `S${index + 1}`,
@@ -152,11 +179,12 @@ async function fetchSelectedThread(userId: string, accessToken: string, selected
 async function fetchRelevantMessages(userId: string, accessToken: string, question: string) {
   const filter = searchFilter(question);
   const limit = filter ? 40 : 30;
-  return supabaseRest<MessageRow[]>(
+  const rows = await supabaseRest<MessageRow[]>(
     `/rest/v1/messages?user_id=eq.${postgrestValue(userId)}${filter}&deleted_at=is.null&select=${SELECT}&order=received_at.desc.nullslast,sent_at.desc.nullslast,created_at.desc&limit=${limit}`,
     { method: "GET" },
     { accessToken },
   );
+  return filter ? strictTermMatches(rows, question) : rows;
 }
 
 function uniqueMessages(messages: MessageRow[]) {
@@ -178,6 +206,31 @@ function formatAnswerWithSources(answer: string, evidence: ReturnType<typeof evi
 }
 
 function privateFallback(question: string, evidence: ReturnType<typeof evidenceFromMessage>[]) {
+  if (/(find|search|show|list|only|with|about|comms?|communications?|emails?|messages?)/i.test(question)) {
+    if (!evidence.length) {
+      return `I could not find imported inbox messages matching "${question}". Try a shorter company name, contact name, email address, or source filter.`;
+    }
+    const bySource = evidence.reduce<Record<string, number>>((counts, item) => {
+      counts[item.source] = (counts[item.source] ?? 0) + 1;
+      return counts;
+    }, {});
+    const sourceSummary = Object.entries(bySource)
+      .map(([source, count]) => `${source}: ${count}`)
+      .join(", ");
+    const items = evidence.slice(0, 8).map((item) =>
+      `[${item.ref}] ${item.source} - ${item.sender} - ${item.subject} - ${item.date ?? "no date"}\n${item.summary}`,
+    );
+    return [
+      `I found ${evidence.length} imported message${evidence.length === 1 ? "" : "s"} matching "${question}".`,
+      `Breakdown: ${sourceSummary}.`,
+      "",
+      "Top matches:",
+      items.join("\n\n"),
+      "",
+      "Options: open the first result, narrow by source, ask for a date range, or ask me to summarise the open loops.",
+    ].join("\n");
+  }
+
   return runPrivateChat({
     question,
     inboxMessages: evidence.map((item) => ({
@@ -200,8 +253,9 @@ export async function POST(request: Request) {
       throw new ApiError("invalid_ai_request", "Question must be between 1 and 1,000 characters.", 400);
     }
 
+    const includeSelectedThread = !isGlobalSearchQuestion(question);
     const [selectedThread, relevantMessages] = await Promise.all([
-      fetchSelectedThread(user.id, accessToken, body.selectedMessageId),
+      includeSelectedThread ? fetchSelectedThread(user.id, accessToken, body.selectedMessageId) : Promise.resolve([]),
       fetchRelevantMessages(user.id, accessToken, question),
     ]);
     const evidence = uniqueMessages([...selectedThread, ...relevantMessages]).slice(0, 24).map(evidenceFromMessage);
