@@ -571,24 +571,24 @@ button {
 }
 
 .right-zone.companion-split-open {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 14px var(--companion-size);
+  gap: 0;
   --companion-width: 34%;
   --companion-size: clamp(360px, var(--companion-width), 560px);
 }
 
 .right-zone.companion-split-open .reader-pane {
-  position: static;
-  width: calc(100% - var(--companion-size) - 14px);
+  width: auto;
   height: 100%;
+  min-width: 0;
 }
 
 .companion-resizer {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(100% - var(--companion-size) - 8px);
-  z-index: 20;
+  position: relative;
+  z-index: 2;
   width: 14px;
+  height: 100%;
   cursor: col-resize;
 }
 
@@ -880,8 +880,10 @@ button {
 }
 
 .right-zone.companion-split-open .copilot-panel {
-  inset: 0 0 0 auto;
-  width: var(--companion-size);
+  position: static;
+  width: auto;
+  height: 100%;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow-soft);

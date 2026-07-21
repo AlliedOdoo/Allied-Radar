@@ -1019,7 +1019,7 @@ export default function Home() {
               ))}
             </div>
 
-            {assistantOpen && (
+            {false && assistantOpen && (
               <>
               <div
                 className="companion-resizer"
@@ -1156,6 +1156,96 @@ export default function Home() {
             </>
             )}
           </section>
+          {assistantOpen && (
+            <>
+              <div
+                className="companion-resizer"
+                role="separator"
+                aria-label="Resize AI companion"
+                aria-orientation="vertical"
+                tabIndex={0}
+                onPointerDown={resizeCompanion}
+              />
+              <section className="assistant-chat copilot-panel companion-pane" aria-label="AI companion inbox assistant">
+                <header>
+                  <div>
+                    <strong>AI companion</strong>
+                    <small>{AI_MODEL_LABEL} · chat, search, summaries, drafts</small>
+                  </div>
+                  <button type="button" onClick={() => setAssistantOpen(false)}>
+                    Back to message
+                  </button>
+                </header>
+
+                <div className="companion-guardrails" role="note">
+                  <strong>Split pane mode</strong>
+                  <span>
+                    I can search, read, summarise, cite sources, open messages, and draft. Sending or destructive actions still need your confirmation.
+                  </span>
+                </div>
+
+                <div className="quick-prompts" aria-label="Suggested assistant prompts">
+                  {["Catch me up", "What needs reply?", "Find related comms", "Draft a reply", "Summarise open loops"].map((prompt) => (
+                    <button key={prompt} type="button" onClick={() => void askAssistant(undefined, prompt)}>
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="assistant-messages" ref={assistantMessagesRef}>
+                  {assistantHistory.map((message, index) => (
+                    <article className={`assistant-bubble ${message.role}`} key={`${message.role}-${index}`}>
+                      <span>{message.content}</span>
+                      {message.citations?.length ? (
+                        <div className="assistant-citations" aria-label="Open cited messages">
+                          {message.citations.slice(0, 8).map((citation) => (
+                            <button
+                              key={`${citation.ref}-${citation.id}`}
+                              type="button"
+                              onClick={() => void openCitation(citation)}
+                            >
+                              <strong>{citation.ref}</strong>
+                              <span>{citation.subject}</span>
+                              <small>
+                                {citation.source} · {citation.sender}
+                              </small>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </article>
+                  ))}
+                  {assistantBusy && <article className="assistant-bubble assistant">Thinking…</article>}
+                </div>
+
+                {assistantNeedsAuth && (
+                  <div className="auth-needed-card">
+                    <div>
+                      <strong>Connect before AI companion reads inbox context</strong>
+                      <p>
+                        This keeps private Outlook, Teams, Odoo, and WhatsApp context behind your Supabase session.
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => void connectMicrosoft()}>
+                      Connect Microsoft 365
+                    </button>
+                  </div>
+                )}
+
+                <form className="assistant-input" onSubmit={(event) => void askAssistant(event)}>
+                  <input
+                    aria-label="Ask AI companion about your inbox"
+                    value={assistantQuestion}
+                    onChange={(event) => setAssistantQuestion(event.target.value)}
+                    placeholder="Ask about this thread or your inbox…"
+                  />
+                  <button type="submit" disabled={assistantBusy}>
+                    Ask
+                  </button>
+                </form>
+              </section>
+            </>
+          )}
         </aside>
       </div>
 
