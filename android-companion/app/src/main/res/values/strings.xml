@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Allied Radar Bridge</string>
+    <string name="notification_listener_label">Allied Radar WhatsApp Bridge</string>
+    <string name="status_invalid_handoff">Missing or invalid handoff ID.</string>
+    <string name="status_pair_before_review">Pair this device before reviewing a handoff.</string>
+    <string name="status_fetching_handoff">Fetching handoff from Allied Radar…</string>
+    <string name="status_handoff_loaded">Loaded server-provided draft. Review before opening WhatsApp.</string>
+    <string name="status_handoff_fetch_failed">Could not fetch this handoff. Try again from Allied Radar.</string>
+    <string name="status_fetch_before_open">Fetch the server-provided handoff before opening WhatsApp.</string>
+</resources>

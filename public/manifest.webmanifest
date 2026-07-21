@@ -1,0 +1,17 @@
+{
+  "name": "Allied Radar",
+  "short_name": "Radar",
+  "description": "A unified inbox with AI drafts and human-confirmed sending.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080A0F",
+  "theme_color": "#080A0F",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
