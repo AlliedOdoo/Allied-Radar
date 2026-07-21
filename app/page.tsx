@@ -306,7 +306,7 @@ export default function Home() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [replyMode, setReplyMode] = useState<"reply" | "reply_all">("reply");
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [companionWidth, setCompanionWidth] = useState(34);
+  const [companionWidth, setCompanionWidth] = useState(420);
 
   function updateAssistantHistory(
     next:
@@ -326,8 +326,9 @@ export default function Home() {
     event.currentTarget.setPointerCapture(pointerId);
 
     function move(pointerEvent: PointerEvent) {
-      const nextWidth = ((bounds.right - pointerEvent.clientX) / bounds.width) * 100;
-      setCompanionWidth(Math.min(56, Math.max(26, nextWidth)));
+      const nextWidth = bounds.right - pointerEvent.clientX;
+      const maxWidth = Math.min(680, bounds.width * 0.62);
+      setCompanionWidth(Math.min(maxWidth, Math.max(360, nextWidth)));
     }
 
     function stop() {
@@ -940,7 +941,7 @@ export default function Home() {
         <aside
           className={assistantOpen ? "right-zone companion-split-open" : "right-zone"}
           aria-label="AI observations and conversation"
-          style={assistantOpen ? ({ "--companion-width": `${companionWidth}%` } as React.CSSProperties) : undefined}
+          style={assistantOpen ? ({ "--companion-width": `${companionWidth}px` } as React.CSSProperties) : undefined}
         >
           <section className="thread-card reader-pane">
             {!selectedMessage ? (

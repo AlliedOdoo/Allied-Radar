@@ -109,7 +109,7 @@ button {
 
 .desktop-stage {
   display: grid;
-  grid-template-columns: 78px minmax(190px, 220px) minmax(300px, 350px) minmax(720px, 1fr);
+  grid-template-columns: 78px minmax(190px, 220px) minmax(300px, 350px) minmax(0, 1fr);
   gap: 12px;
   width: 100vw;
   height: 100vh;
@@ -573,11 +573,12 @@ button {
 .right-zone.companion-split-open {
   display: block;
   --companion-width: 34%;
+  --companion-size: clamp(360px, var(--companion-width), 560px);
 }
 
 .right-zone.companion-split-open .reader-pane {
   position: static;
-  width: calc(100% - var(--companion-width) - 12px);
+  width: calc(100% - var(--companion-size) - 14px);
   height: 100%;
 }
 
@@ -585,7 +586,7 @@ button {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(100% - var(--companion-width) - 8px);
+  left: calc(100% - var(--companion-size) - 8px);
   z-index: 20;
   width: 14px;
   cursor: col-resize;
@@ -880,7 +881,7 @@ button {
 
 .right-zone.companion-split-open .copilot-panel {
   inset: 0 0 0 auto;
-  width: var(--companion-width);
+  width: var(--companion-size);
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow-soft);
@@ -930,6 +931,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
+  align-items: center;
 }
 
 .companion-guardrails {
@@ -954,6 +956,7 @@ button {
 }
 
 .quick-prompts button {
+  flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #fff;
@@ -961,6 +964,8 @@ button {
   padding: 6px 9px;
   font-size: 11px;
   font-weight: 720;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 .assistant-messages {
