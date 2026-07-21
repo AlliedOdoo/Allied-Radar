@@ -1,23 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fbfaf8;
+  --bg: #fafafa;
   --paper: #ffffff;
-  --paper-soft: rgba(255, 255, 255, 0.76);
-  --ink: #181817;
-  --muted: #77736d;
-  --faint: #aaa49b;
-  --line: rgba(24, 24, 23, 0.075);
-  --line-strong: rgba(24, 24, 23, 0.13);
-  --shadow-soft: 0 28px 75px rgba(50, 45, 38, 0.13);
-  --shadow-card: 0 12px 32px rgba(50, 45, 38, 0.11);
-  --radius-card: 18px;
-  --radius-panel: 20px;
-  --gmail: #ea4335;
-  --whatsapp: #25d366;
-  --outlook: #0078d4;
-  --teams: #6264a7;
-  --odoo: #714b67;
+  --paper-soft: rgba(255, 255, 255, 0.82);
+  --ink: #1a1a1a;
+  --muted: #6f7378;
+  --faint: #9b9fa5;
+  --line: #eaeaea;
+  --line-strong: #dcdfe4;
+  --accent: #3b5bdb;
+  --accent-soft: rgba(59, 91, 219, 0.05);
+  --accent-hover: rgba(59, 91, 219, 0.08);
+  --danger: #b84a44;
+  --shadow-soft: 0 18px 52px rgba(32, 36, 44, 0.08);
+  --shadow-card: 0 10px 26px rgba(32, 36, 44, 0.07);
+  --radius-small: 6px;
+  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-panel: 10px;
+  --gmail: #d95043;
+  --whatsapp: #1fb35d;
+  --outlook: #2f7fc1;
+  --teams: #5d61a6;
+  --odoo: #76566f;
 }
 
 * {
@@ -41,6 +47,11 @@ body {
   background-size: 24px 24px, 24px 24px, auto, auto, auto;
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .sr-only {
@@ -100,6 +111,7 @@ button {
   flex-direction: column;
   align-items: center;
   border-radius: var(--radius-panel);
+  background: rgba(244, 246, 250, 0.88);
   padding: 14px 8px;
 }
 
@@ -117,29 +129,29 @@ button {
   height: 58px;
   place-items: center;
   border: 0;
-  border-radius: 17px;
+  border-radius: var(--radius-button);
   background: transparent;
   color: var(--ink);
 }
 
 .rail-brand {
-  background: #111;
+  background: var(--accent);
   color: #fff;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 10px 20px rgba(59, 91, 219, 0.16);
 }
 
 .rail-avatar {
   margin-top: auto;
-  background: #f5f1ec;
-  color: #5e5850;
+  background: #f1f3f7;
+  color: var(--muted);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .rail-button.active {
-  background: #111;
+  background: var(--accent);
   color: #fff;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 24px rgba(59, 91, 219, 0.16);
 }
 
 .source-glyph {
@@ -147,11 +159,11 @@ button {
   width: 42px;
   height: 42px;
   place-items: center;
-  border-radius: 14px;
+  border-radius: var(--radius-small);
   background: #f7f4ef;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -161,7 +173,7 @@ button {
   display: block;
 }
 
-.source-glyph.all { color: #111; }
+.source-glyph.all { color: var(--ink); }
 .source-glyph.whatsapp { color: var(--whatsapp); }
 .source-glyph.outlook { color: var(--outlook); }
 .source-glyph.teams { color: var(--teams); }
@@ -174,6 +186,7 @@ button {
   min-width: 0;
   overflow: hidden;
   border-radius: var(--radius-panel);
+  background: rgba(247, 248, 251, 0.84);
   padding: 18px 14px;
 }
 
@@ -186,15 +199,16 @@ button {
 .folder-sidebar-header p,
 .folder-section p {
   margin: 0;
-  color: #9a7562;
+  color: var(--faint);
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .folder-sidebar-header strong {
   font-size: 21px;
+  font-weight: 600;
   letter-spacing: -0.04em;
 }
 
@@ -206,7 +220,7 @@ button {
   gap: 10px;
   width: 100%;
   border: 1px solid transparent;
-  border-radius: 15px;
+  border-radius: var(--radius-button);
   background: transparent;
   color: var(--ink);
   padding: 8px 9px;
@@ -218,7 +232,7 @@ button {
   border-color: var(--line);
   background: rgba(255, 255, 255, 0.7);
   font-size: 13px;
-  font-weight: 820;
+  font-weight: 400;
 }
 
 .folder-primary > span:last-child {
@@ -228,16 +242,16 @@ button {
 
 .folder-primary.active,
 .folder-link.active {
-  border-color: rgba(24, 24, 23, 0.16);
-  background: #111;
-  color: #fff;
-  box-shadow: 0 14px 30px rgba(24, 24, 23, 0.12);
+  border-color: rgba(59, 91, 219, 0.18);
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: none;
 }
 
 .folder-primary.active .source-glyph,
 .folder-link.active .source-glyph {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: rgba(59, 91, 219, 0.08);
+  color: var(--accent);
 }
 
 .folder-section {
@@ -264,7 +278,7 @@ button {
 .folder-sidebar .source-glyph {
   width: 30px;
   height: 30px;
-  border-radius: 10px;
+  border-radius: var(--radius-small);
 }
 
 .folder-sidebar .source-glyph svg {
@@ -275,7 +289,7 @@ button {
 .folder-link {
   color: #4f4942;
   font-size: 13px;
-  font-weight: 740;
+  font-weight: 400;
   padding: 8px 9px;
 }
 
@@ -294,7 +308,7 @@ button {
   align-items: center;
   gap: 10px;
   border: 1px solid rgba(24, 24, 23, 0.08);
-  border-radius: 999px;
+  border-radius: var(--radius-card);
   background: #fff;
   box-shadow: 0 10px 26px rgba(30, 28, 24, 0.06);
   padding: 9px 10px 9px 12px;
@@ -303,7 +317,7 @@ button {
 .ask-orb {
   width: 16px;
   height: 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-small);
   background: radial-gradient(circle at 35% 35%, #ffb066, #ed3f2f 55%, #9bcfc7);
 }
 
@@ -324,12 +338,12 @@ button {
 .ghost-button,
 .primary-button {
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-button);
   background: #f8f6f2;
   color: var(--ink);
   padding: 7px 12px;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 400;
 }
 
 .ask-bar button:disabled {
@@ -356,6 +370,7 @@ button {
 .mobile-header h1 {
   margin: 4px 0 0;
   font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 500;
   letter-spacing: -0.045em;
   line-height: 1;
 }
@@ -370,12 +385,12 @@ button {
 .inbox-title-actions span {
   height: fit-content;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-button);
   background: #fff;
   color: var(--muted);
   padding: 7px 11px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .inbox-title-actions button {
@@ -430,7 +445,7 @@ button {
   margin: 10px 4px 7px;
   color: var(--faint);
   font-size: 11px;
-  font-weight: 750;
+  font-weight: 400;
 }
 
 .message-row {
@@ -440,7 +455,8 @@ button {
   width: 100%;
   gap: 10px;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-top: 1px solid var(--line);
+  border-radius: var(--radius-button);
   background: transparent;
   color: inherit;
   padding: 10px 9px;
@@ -451,8 +467,8 @@ button {
 .message-row:hover,
 .message-row.selected {
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 10px 28px rgba(49, 44, 37, 0.06);
+  background: var(--accent-soft);
+  box-shadow: none;
 }
 
 .avatar {
@@ -460,11 +476,11 @@ button {
   width: 31px;
   height: 31px;
   place-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-small);
   background: linear-gradient(135deg, #2b2621, #817568);
   color: #fff;
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 500;
 }
 
 .row-copy {
@@ -483,7 +499,7 @@ button {
 .row-topline strong {
   overflow: hidden;
   font-size: 13px;
-  font-weight: 760;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -582,7 +598,7 @@ button {
   margin: 0;
   color: var(--faint);
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -590,6 +606,7 @@ button {
 .empty-reader h2 {
   margin: 0;
   font-size: 30px;
+  font-weight: 600;
   letter-spacing: -0.05em;
 }
 
@@ -634,12 +651,12 @@ button {
 
 .thread-header-actions button {
   border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #111;
-  color: #fff;
+  border-radius: var(--radius-button);
+  background: #fff;
+  color: var(--ink);
   padding: 8px 11px;
   font-size: 11px;
-  font-weight: 820;
+  font-weight: 400;
 }
 
 .thread-header-actions .secondary-action {
@@ -648,8 +665,21 @@ button {
 }
 
 .thread-header-actions .secondary-action.danger {
-  border-color: rgba(219, 67, 43, 0.22);
-  color: #9d2d20;
+  border-color: rgba(184, 74, 68, 0.2);
+  color: var(--danger);
+}
+
+.thread-header-actions button:hover {
+  border-color: rgba(59, 91, 219, 0.16);
+  background: var(--accent-hover);
+  color: var(--accent);
+}
+
+.thread-header-actions button:not(.secondary-action) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
 }
 
 .thread-scroll {
@@ -670,7 +700,7 @@ button {
 .assistant-note,
 .assistant-chat {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius-card);
   background: #fff;
   box-shadow: 0 12px 28px rgba(49, 44, 37, 0.06);
   padding: 15px;
@@ -679,13 +709,13 @@ button {
 .bubble {
   max-width: min(1040px, 94%);
   margin: 0 auto 14px;
-  border-bottom-left-radius: 6px;
+  border-bottom-left-radius: var(--radius-small);
   padding: 30px 34px;
 }
 
 .selected-thread-message {
-  border-color: rgba(0, 120, 212, 0.22);
-  box-shadow: 0 16px 34px rgba(0, 120, 212, 0.08);
+  border-color: rgba(59, 91, 219, 0.22);
+  box-shadow: 0 14px 30px rgba(59, 91, 219, 0.07);
 }
 
 .thread-loading {
@@ -711,20 +741,23 @@ button {
 .bubble h3 {
   margin: 12px 0 0;
   font-size: 17px;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 .bubble strong,
 .assistant-note strong {
   font-size: 15px;
+  font-weight: 500;
 }
 
 .bubble p,
 .assistant-note p {
   margin: 14px 0 0;
-  color: #4f4942;
+  color: var(--ink);
   font-size: 15px;
-  line-height: 1.72;
+  font-weight: 400;
+  line-height: 1.55;
 }
 
 .assistant-note {
@@ -1631,6 +1664,248 @@ button {
   padding: 5px 8px;
   font-size: 11px;
   font-weight: 750;
+}
+
+/* Visual refinement layer: calm, sharp, low-weight inbox system. */
+button,
+input,
+textarea,
+select {
+  font-weight: 400;
+}
+
+strong {
+  font-weight: 500;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+a,
+.composer-details-toggle {
+  color: var(--accent);
+}
+
+.platform-rail,
+.folder-sidebar,
+.inbox-window,
+.thread-card,
+.connection-center,
+.confirmation-dialog,
+.compose-dialog,
+.mobile-header,
+.mobile-row,
+.bottom-tabs {
+  border-color: var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.observation-card,
+.bubble,
+.assistant-note,
+.assistant-chat,
+.auth-needed-card,
+.master-send-state,
+.connection-item,
+.health-row,
+.pairing-code,
+.send-feedback,
+.connector-state,
+.attachment-picker,
+.compose-provider-picker button {
+  border-radius: var(--radius-card);
+}
+
+.rail-brand,
+.rail-avatar,
+.rail-button,
+.source-glyph,
+.folder-primary,
+.folder-link,
+.ask-bar,
+.ask-bar button,
+.ghost-button,
+.primary-button,
+.inbox-title-actions button,
+.inbox-title-actions span,
+.thread-header-actions button,
+.assistant-chat header button,
+.assistant-chat header > span,
+.quick-prompts button,
+.auth-needed-card button,
+.dialog-close,
+.secondary-action,
+.send-review-action,
+.send-now-action,
+.reply-mode-tabs button,
+.draft-actions button,
+.attachment-picker li button,
+.assistant-input input,
+.assistant-input button {
+  border-radius: var(--radius-button);
+}
+
+.avatar,
+.connector-dot,
+.connection-status,
+.source-dot {
+  border-radius: var(--radius-small);
+}
+
+.rail-brand,
+.rail-button.active,
+.reply-mode-tabs button.active,
+.send-review-action,
+.send-now-action,
+.primary-button,
+.assistant-input button,
+.auth-needed-card button,
+.compose-provider-picker button.active,
+.bottom-tabs button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(59, 91, 219, 0.14);
+  font-weight: 500;
+}
+
+.folder-primary.active,
+.folder-link.active,
+.message-row.selected,
+.message-row:hover {
+  border-color: rgba(59, 91, 219, 0.16);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.folder-primary.active,
+.folder-link.active {
+  color: var(--accent);
+}
+
+.folder-sidebar-header strong,
+.empty-reader h2,
+.bubble h3,
+.section-heading strong,
+.confirmation-heading h3 {
+  font-weight: 600;
+}
+
+.folder-sidebar-header p,
+.folder-section p,
+.eyebrow,
+.section-heading span,
+.composer-field span,
+.compose-input span {
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.folder-primary,
+.folder-link,
+.row-source,
+.row-topline time,
+.thread-message-heading time,
+.thread-header p,
+.thread-header span:not(.source-glyph),
+.search-note,
+.connection-item p,
+.health-row small,
+.send-boundary,
+.send-feedback,
+.connection-actions small,
+.connection-note,
+.assistant-chat header small,
+.assistant-chat header > span,
+.quick-prompts button,
+.draft-actions button,
+.dialog-close,
+.secondary-action,
+.thread-header-actions button {
+  font-weight: 400;
+}
+
+.row-topline strong,
+.bubble strong,
+.assistant-note strong,
+.connection-item strong,
+.master-send-state strong,
+.auth-needed-card strong {
+  font-weight: 500;
+}
+
+.bubble p,
+.assistant-note p,
+.assistant-bubble,
+.row-summary,
+.compose-input input,
+.compose-input textarea,
+.send-composer textarea,
+.assistant-input input,
+.reply-composer textarea {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.bubble p,
+.assistant-note p {
+  font-size: 15px;
+}
+
+.thread-header-actions button {
+  background: transparent;
+  color: var(--muted);
+}
+
+.thread-header-actions button:hover,
+.draft-actions button:hover,
+.quick-prompts button:hover,
+.secondary-action:hover,
+.dialog-close:hover {
+  border-color: rgba(59, 91, 219, 0.16);
+  background: var(--accent-hover);
+  color: var(--accent);
+}
+
+.thread-header-actions button:not(.secondary-action),
+.send-review-action,
+.send-now-action {
+  background: var(--accent);
+  color: #fff;
+}
+
+.thread-header-actions .secondary-action.danger,
+.send-feedback.error {
+  color: var(--danger);
+}
+
+.selected-thread-message,
+.auth-needed-card,
+.pairing-code {
+  border-color: rgba(59, 91, 219, 0.18);
+  background: var(--accent-soft);
+}
+
+.assistant-bubble.user {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.source-glyph.whatsapp { color: #20ad5d; }
+.source-glyph.outlook { color: #2d7dbc; }
+.source-glyph.teams { color: #5c61a4; }
+.source-glyph.odoo { color: #73566b; }
+
+.rail-button.active .source-glyph,
+.bottom-tabs button.active .source-glyph {
+  color: #fff;
 }
 
 .mobile-shell {
