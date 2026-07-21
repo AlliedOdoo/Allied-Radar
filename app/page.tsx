@@ -524,7 +524,7 @@ export default function Home() {
       }
       setAssistantNeedsAuth(false);
 
-      const response = await fetch("/api/ai/chat", {
+      const response = await fetch("/api/ai/copilot", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${data.session.access_token}`,
@@ -532,8 +532,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           question,
-          selectedMessage,
-          inboxMessages: visibleMessages,
+          selectedMessageId: selectedMessage?.id,
           history: assistantHistory,
         }),
       });

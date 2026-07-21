@@ -107,17 +107,21 @@ test("send confirmation is authenticated and bound to one user", async () => {
 });
 
 test("AI routes require authentication and fail closed to private routing", async () => {
-  const [provider, draftRoute, searchRoute] = await Promise.all([
+  const [provider, draftRoute, searchRoute, copilotRoute] = await Promise.all([
     readFile(new URL("../lib/ai/provider.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ai/draft/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ai/search/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/ai/copilot/route.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(provider, /data_collection:\s*"deny"/);
   assert.match(provider, /zdr:\s*true/);
   assert.match(draftRoute, /requireSupabaseUser/);
   assert.match(searchRoute, /requireSupabaseUser/);
-  assert.doesNotMatch(`${draftRoute}\n${searchRoute}`, /local placeholder/);
+  assert.match(copilotRoute, /requireSupabaseUser/);
+  assert.match(copilotRoute, /inputMessageIds:\s*evidenceIds/);
+  assert.match(copilotRoute, /Content is minimized and capped/);
+  assert.doesNotMatch(`${draftRoute}\n${searchRoute}\n${copilotRoute}`, /local placeholder|console\./);
 });
 
 test("WhatsApp handoffs are confirmed server-side and encrypted at rest", async () => {
