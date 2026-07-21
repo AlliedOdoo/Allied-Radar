@@ -27,6 +27,60 @@ type MessageRow = {
   ai_reason: string | null;
 };
 
+function searchTerms(query: string) {
+  const stopWords = new Set([
+    "a",
+    "about",
+    "all",
+    "and",
+    "any",
+    "chat",
+    "chats",
+    "comm",
+    "comms",
+    "communication",
+    "communications",
+    "email",
+    "emails",
+    "find",
+    "for",
+    "from",
+    "in",
+    "mail",
+    "mails",
+    "message",
+    "messages",
+    "of",
+    "on",
+    "search",
+    "show",
+    "the",
+    "to",
+    "with",
+  ]);
+  const terms = query
+    .split(/[^a-zA-Z0-9@._+-]+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length > 1 && !stopWords.has(term.toLowerCase()));
+  return terms.length ? terms.slice(0, 8) : [query];
+}
+
+function inboxSearchFilter(query?: string) {
+  if (!query) return "";
+  const filters = searchTerms(query).flatMap((term) => {
+    const value = postgrestValue(term);
+    return [
+      `subject.ilike.*${value}*`,
+      `preview.ilike.*${value}*`,
+      `body_text.ilike.*${value}*`,
+      `sender->>name.ilike.*${value}*`,
+      `sender->>address.ilike.*${value}*`,
+      `sender->>phone.ilike.*${value}*`,
+    ];
+  });
+  return `&or=(${filters.join(",")})`;
+}
+
 export async function GET(request: Request) {
   try {
     const { user, accessToken } = await requireSupabaseUser(request);
@@ -39,13 +93,7 @@ export async function GET(request: Request) {
     const folderFilter = folder ? `&mail_folder=eq.${postgrestValue(folder)}` : "";
     const unreadFilter = url.searchParams.get("unread") === "true" ? "&is_read=eq.false" : "";
     const flaggedFilter = url.searchParams.get("flagged") === "true" ? "&is_flagged=eq.true" : "";
-    const queryFilter = query
-      ? `&or=(${[
-          `subject.ilike.*${postgrestValue(query)}*`,
-          `preview.ilike.*${postgrestValue(query)}*`,
-          `body_text.ilike.*${postgrestValue(query)}*`,
-        ].join(",")})`
-      : "";
+    const queryFilter = inboxSearchFilter(query);
     const rows = await supabaseRest<MessageRow[]>(
       `/rest/v1/messages?user_id=eq.${postgrestValue(user.id)}${sourceFilter}${folderFilter}${unreadFilter}${flaggedFilter}${queryFilter}&deleted_at=is.null&select=id,source,source_type,external_id,external_thread_id,sender,subject,preview,body_text,received_at,sent_at,is_read,is_flagged,mail_folder,provider_state,local_status,opened_at,acknowledged_at,importance,ai_reason&order=received_at.desc.nullslast,sent_at.desc.nullslast,created_at.desc&limit=150`,
       { method: "GET" },
