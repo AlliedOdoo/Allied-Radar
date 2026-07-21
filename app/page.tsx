@@ -656,6 +656,60 @@ export default function Home() {
           </button>
         </aside>
 
+        <aside className="folder-sidebar" aria-label="Folders and sources">
+          <div className="folder-sidebar-header">
+            <p>Workspace</p>
+            <strong>Radar</strong>
+          </div>
+
+          <button
+            type="button"
+            className={activeMailbox === "All mailboxes" ? "folder-primary active" : "folder-primary"}
+            onClick={() => void selectMailbox("All mailboxes")}
+          >
+            <span className="folder-label">
+              <span className="source-glyph all">
+                <PlatformIcon source="All mailboxes" />
+              </span>
+              All mailboxes
+            </span>
+            <span>{visibleMessages.length}</span>
+          </button>
+
+          <div className="folder-section">
+            <p>Sources</p>
+            {mailboxOptions.slice(1).map((mailbox) => (
+              <button
+                key={mailbox.label}
+                type="button"
+                className={activeMailbox === mailbox.label ? "folder-link active" : "folder-link"}
+                onClick={() => void selectMailbox(mailbox.label)}
+              >
+                <span className="folder-label">
+                  <span className={`source-glyph ${mailbox.className}`}>
+                    <PlatformIcon source={mailbox.label} />
+                  </span>
+                  {mailbox.label === "Odoo Discuss" ? "Odoo" : mailbox.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="folder-section">
+            <p>Outlook</p>
+            {outlookFolderOptions.map((folder) => (
+              <button
+                className={activeMailbox === folder.label ? "folder-link active" : "folder-link"}
+                key={folder.label}
+                type="button"
+                onClick={() => void selectMailbox(folder.label)}
+              >
+                <span>{folder.label}</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
         <section className="inbox-window">
           <form className="ask-bar" onSubmit={searchMailboxes}>
             <span className="ask-orb" aria-hidden="true" />
@@ -683,20 +737,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="folder-strip" aria-label="Outlook folders">
-            {outlookFolderOptions.map((folder) => (
-              <button
-                className={activeMailbox === folder.label ? "active" : ""}
-                key={folder.label}
-                type="button"
-                onClick={() => void selectMailbox(folder.label)}
-              >
-                {folder.label}
-              </button>
-            ))}
-          </div>
-
-          {searchNote && <p className="search-note">{searchNote}</p>}
+          <p className="search-note">{searchNote || "Live messages loaded from your private Supabase inbox."}</p>
 
           <div className="message-list" aria-label={`${activeMailbox} messages`}>
             {visibleMessages.map((message, index) => {
@@ -749,19 +790,6 @@ export default function Home() {
               </div>
             ) : (
             <>
-            <div className="floating-observations" aria-label="Proactive inbox observations">
-              {proactiveCards.map((card) => (
-                <article className={card.active ? "observation-card active" : "observation-card"} key={card.sender}>
-                  <span className={`source-dot ${sourceClass(card.source)}`} aria-hidden="true" />
-                  <div>
-                    <strong>{card.sender}</strong>
-                    <p>{card.body}</p>
-                    <time>{card.time}</time>
-                  </div>
-                </article>
-              ))}
-            </div>
-
             <header className="thread-header">
               <div>
                 <p>{selectedMessage.source}</p>
@@ -825,7 +853,9 @@ export default function Home() {
                   <p>{threadMessage.detail}</p>
                 </article>
               ))}
-              {assistantOpen && (
+            </div>
+
+            {assistantOpen && (
               <section className="assistant-chat copilot-panel" aria-label="Kimi inbox assistant">
                 <header>
                   <div>
@@ -880,8 +910,7 @@ export default function Home() {
                   </button>
                 </form>
               </section>
-              )}
-            </div>
+            )}
 
             <footer className="reply-composer">
               {selectedProvider ? (
