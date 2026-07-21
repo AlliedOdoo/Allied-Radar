@@ -7,7 +7,7 @@ export type AiChatMessage = {
 };
 
 export function isAiConfigured() {
-  return Boolean(process.env.OPENROUTER_API_KEY?.trim());
+  return process.env.ENABLE_EXTERNAL_AI === "true" && Boolean(process.env.OPENROUTER_API_KEY?.trim());
 }
 
 export const AI_PRIVACY_POLICY = {

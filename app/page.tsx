@@ -520,7 +520,7 @@ export default function Home() {
       const { data } = await getSupabaseBrowserClient().auth.getSession();
       if (!data.session) {
         setAssistantNeedsAuth(true);
-        throw new Error("Connect Microsoft 365 so private Kimi chat can read your inbox context safely.");
+        throw new Error("Connect Microsoft 365 so Radar can read your private inbox context safely.");
       }
       setAssistantNeedsAuth(false);
 
@@ -538,7 +538,7 @@ export default function Home() {
         }),
       });
       const payload = (await response.json()) as { answer?: string; error?: string; model?: string };
-      if (!response.ok) throw new Error(payload.error || "Kimi chat is unavailable.");
+      if (!response.ok) throw new Error(payload.error || "Radar assistant is unavailable.");
       setAssistantHistory([
         ...nextHistory,
         {
@@ -636,7 +636,7 @@ export default function Home() {
     <main className="app-shell" data-theme={theme}>
       <div className="desktop-stage" aria-label="Allied Radar unified inbox">
         <div className="sr-only">
-          Mailbox navigation. Latest across every inbox. AI workspace. AI draft / human send. Kimi K2.6 Free.
+          Mailbox navigation. Latest across every inbox. AI workspace. AI draft / human send. Private local assistant.
         </div>
         <aside className="platform-rail" aria-label="Mailboxes">
           <button className="rail-brand" type="button" aria-label="Allied Radar home">
@@ -877,7 +877,7 @@ export default function Home() {
             </div>
 
             {assistantOpen && (
-              <section className="assistant-chat copilot-panel" aria-label="Kimi inbox assistant">
+              <section className="assistant-chat copilot-panel" aria-label="Radar inbox assistant">
                 <header>
                   <div>
                     <strong>Radar assistant</strong>
@@ -908,7 +908,7 @@ export default function Home() {
                 {assistantNeedsAuth && (
                   <div className="auth-needed-card">
                     <div>
-                      <strong>Connect before Kimi reads inbox context</strong>
+                      <strong>Connect before Radar reads inbox context</strong>
                       <p>
                         This keeps private Outlook, Teams, Odoo, and WhatsApp context behind your Supabase session.
                       </p>
@@ -921,7 +921,7 @@ export default function Home() {
 
                 <form className="assistant-input" onSubmit={(event) => void askAssistant(event)}>
                   <input
-                    aria-label="Ask Kimi about your inbox"
+                    aria-label="Ask Radar about your inbox"
                     value={assistantQuestion}
                     onChange={(event) => setAssistantQuestion(event.target.value)}
                     placeholder="Ask about this thread or your inbox…"

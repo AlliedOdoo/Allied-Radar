@@ -1,4 +1,5 @@
 import { isAiConfigured, runAiChat, type AiChatMessage } from "../../../../lib/ai/provider";
+import { runPrivateChat } from "../../../../lib/ai/private-local";
 import { ASSISTANT_CHAT_SYSTEM_PROMPT } from "../../../../lib/guardrails";
 import { recordAiTraceEvent } from "../../../../lib/ops/logging";
 import { requireSupabaseUser } from "../../../../lib/security/auth";
@@ -46,11 +47,6 @@ export async function POST(request: Request) {
     if (!question || question.length > 1_000) {
       throw new ApiError("invalid_ai_request", "Question must be between 1 and 1,000 characters.", 400);
     }
-    if (!isAiConfigured()) {
-      await recordAiTraceEvent({ userId: user.id, mode: "chat", status: "blocked", errorCode: "ai_disabled" });
-      throw new ApiError("ai_disabled", "Private AI chat is not configured.", 503);
-    }
-
     const inboxMessages = (body.inboxMessages || []).slice(0, 20).map(compactMessage);
     const selectedMessage = body.selectedMessage ? compactMessage(body.selectedMessage) : null;
     const history = (body.history || [])
@@ -61,6 +57,23 @@ export async function POST(request: Request) {
       )
       .slice(-8)
       .map((message) => ({ role: message.role, content: message.content.slice(0, 2_000) }));
+
+    if (!isAiConfigured()) {
+      await recordAiTraceEvent({
+        userId: user.id,
+        provider: "private-local",
+        model: "deterministic",
+        mode: "chat",
+        status: "success",
+        inputMessageIds: body.selectedMessage?.id ? [body.selectedMessage.id] : [],
+      });
+      return noStoreJson({
+        model: "private-local",
+        mode: "assistant_chat_review_only",
+        privacy: "local_no_external_ai",
+        answer: runPrivateChat({ question, selectedMessage, inboxMessages }),
+      });
+    }
 
     const messages: AiChatMessage[] = [
       { role: "system", content: ASSISTANT_CHAT_SYSTEM_PROMPT },
@@ -78,7 +91,26 @@ export async function POST(request: Request) {
       { role: "user", content: question },
     ];
 
-    const result = await runAiChat(messages, 900);
+    let result: { text: string; model: string };
+    try {
+      result = await runAiChat(messages, 900);
+    } catch {
+      await recordAiTraceEvent({
+        userId: user.id,
+        provider: "private-local",
+        model: "deterministic",
+        mode: "chat",
+        status: "success",
+        errorCode: "external_ai_unavailable",
+        inputMessageIds: body.selectedMessage?.id ? [body.selectedMessage.id] : [],
+      });
+      return noStoreJson({
+        model: "private-local",
+        mode: "assistant_chat_review_only",
+        privacy: "local_no_external_ai",
+        answer: runPrivateChat({ question, selectedMessage, inboxMessages }),
+      });
+    }
     await recordAiTraceEvent({
       userId: user.id,
       provider: "openrouter",

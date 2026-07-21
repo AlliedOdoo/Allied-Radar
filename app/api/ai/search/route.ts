@@ -1,4 +1,5 @@
 import { isAiConfigured, parseJsonObject, runAiChat } from "../../../../lib/ai/provider";
+import { runPrivateSearch } from "../../../../lib/ai/private-local";
 import { DRAFT_ONLY_SYSTEM_PROMPT } from "../../../../lib/guardrails";
 import { recordAiTraceEvent } from "../../../../lib/ops/logging";
 import { requireSupabaseUser } from "../../../../lib/security/auth";
@@ -20,17 +21,33 @@ export async function POST(request: Request) {
       );
     }
     if (!isAiConfigured()) {
-      await recordAiTraceEvent({ userId: user.id, mode: "search", status: "blocked", errorCode: "ai_disabled" });
-      throw new ApiError("ai_disabled", "Private AI search assistance is not configured.", 503);
+      await recordAiTraceEvent({ userId: user.id, provider: "private-local", model: "deterministic", mode: "search", status: "success" });
+      return noStoreJson({
+        model: "private-local",
+        mode: "search_assist",
+        privacy: "local_no_external_ai",
+        result: runPrivateSearch(query),
+      });
     }
 
-    const result = await runAiChat([
+    let result: { text: string; model: string };
+    try {
+      result = await runAiChat([
       {
         role: "system",
         content: `${DRAFT_ONLY_SYSTEM_PROMPT}\nFor search assistance, return only valid JSON with expandedQuery, likelyPeople, topics, and filters.`,
       },
       { role: "user", content: `Expand this unified inbox search query: ${query}` },
-    ], 500);
+      ], 500);
+    } catch {
+      await recordAiTraceEvent({ userId: user.id, provider: "private-local", model: "deterministic", mode: "search", status: "success", errorCode: "external_ai_unavailable" });
+      return noStoreJson({
+        model: "private-local",
+        mode: "search_assist",
+        privacy: "local_no_external_ai",
+        result: runPrivateSearch(query),
+      });
+    }
     await recordAiTraceEvent({ userId: user.id, provider: "openrouter", model: result.model, mode: "search", status: "success" });
     return noStoreJson({
       model: result.model,

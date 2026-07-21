@@ -1,4 +1,5 @@
 import { isAiConfigured, runAiChat } from "../../../../lib/ai/provider";
+import { runPrivateDraft } from "../../../../lib/ai/private-local";
 import { DRAFT_ONLY_SYSTEM_PROMPT } from "../../../../lib/guardrails";
 import { recordAiTraceEvent } from "../../../../lib/ops/logging";
 import { requireSupabaseUser } from "../../../../lib/security/auth";
@@ -28,11 +29,24 @@ export async function POST(request: Request) {
       throw new ApiError("invalid_ai_request", "Draft context is too large.", 400);
     }
     if (!isAiConfigured()) {
-      await recordAiTraceEvent({ userId: user.id, mode: "draft", status: "blocked", errorCode: "ai_disabled" });
-      throw new ApiError("ai_disabled", "Private AI drafting is not configured.", 503);
+      const draft = runPrivateDraft({
+        message: sourceMessage,
+        tone: body.tone,
+        instruction: body.instruction,
+        context: body.context,
+      });
+      await recordAiTraceEvent({ userId: user.id, provider: "private-local", model: "deterministic", mode: "draft", status: "success" });
+      return noStoreJson({
+        model: "private-local",
+        mode: "draft_only",
+        privacy: "local_no_external_ai",
+        draft,
+      });
     }
 
-    const result = await runAiChat([
+    let result: { text: string; model: string };
+    try {
+      result = await runAiChat([
       { role: "system", content: DRAFT_ONLY_SYSTEM_PROMPT },
       {
         role: "user",
@@ -45,7 +59,22 @@ export async function POST(request: Request) {
           "Return only the editable draft. Never claim it was sent.",
         ].filter(Boolean).join("\n"),
       },
-    ]);
+      ]);
+    } catch {
+      const draft = runPrivateDraft({
+        message: sourceMessage,
+        tone: body.tone,
+        instruction: body.instruction,
+        context: body.context,
+      });
+      await recordAiTraceEvent({ userId: user.id, provider: "private-local", model: "deterministic", mode: "draft", status: "success", errorCode: "external_ai_unavailable" });
+      return noStoreJson({
+        model: "private-local",
+        mode: "draft_only",
+        privacy: "local_no_external_ai",
+        draft,
+      });
+    }
     await recordAiTraceEvent({ userId: user.id, provider: "openrouter", model: result.model, mode: "draft", status: "success" });
     return noStoreJson({
       model: result.model,

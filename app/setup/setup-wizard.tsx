@@ -313,11 +313,11 @@ export function SetupWizard() {
           </div>
           <h2>AI cannot read inbox data until approved.</h2>
           <p>
-            External AI should fail closed unless the organization enables a privacy-compliant provider. Logs should store hashes and metadata, not message bodies.
+            External AI is off by default. Radar can still do private local drafts, search help, and catch-up without sending inbox content to OpenRouter.
           </p>
           <dl>
-            <div><dt>Current policy</dt><dd>No privacy-compliant endpoint available</dd></div>
-            <div><dt>Safe behavior</dt><dd>Block AI request and accept no draft data</dd></div>
+            <div><dt>Current policy</dt><dd>Private local assistant enabled</dd></div>
+            <div><dt>External AI</dt><dd>Disabled unless explicitly approved</dd></div>
           </dl>
         </article>
 

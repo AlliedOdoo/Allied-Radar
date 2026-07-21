@@ -54,7 +54,7 @@ test("server-renders the Allied Radar send workflow", async () => {
   assert.match(html, /AI draft \/ human send/i);
   assert.match(html, /cannot press send/i);
   assert.match(html, /Review &amp; send/i);
-  assert.match(html, /Kimi K2\.6 Free/);
+  assert.match(html, /Private local assistant/);
   assert.match(html, /WhatsApp/);
   assert.match(html, /Odoo Discuss/);
   assert.doesNotMatch(html, /codex-preview/);

@@ -1,6 +1,8 @@
-export const AI_PROVIDER = "OpenRouter";
+export const AI_PROVIDER = process.env.ENABLE_EXTERNAL_AI === "true" ? "OpenRouter" : "Private local";
 export const AI_MODEL = process.env.AI_MODEL ?? "moonshotai/kimi-k2.6:free";
-export const AI_MODEL_LABEL = AI_MODEL === "moonshotai/kimi-k2.6:free" ? "Kimi K2.6 Free" : AI_MODEL;
+export const AI_MODEL_LABEL = process.env.ENABLE_EXTERNAL_AI === "true"
+  ? AI_MODEL === "moonshotai/kimi-k2.6:free" ? "Kimi K2.6 Free" : AI_MODEL
+  : "Private local assistant";
 
 // AI can chat, summarize, search, extract actions, and draft. Outbound delivery
 // remains outside the AI path and requires a separate human confirmation flow.
