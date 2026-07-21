@@ -210,6 +210,52 @@ function formatAnswerWithSources(answer: string, evidence: ReturnType<typeof evi
 }
 
 function privateFallback(question: string, evidence: ReturnType<typeof evidenceFromMessage>[]) {
+  if (/(missed|wasting time|waste time|fill me in|catch.*up|priority|priorities|what matters|what.*ignore|triage)/i.test(question)) {
+    if (!evidence.length) {
+      return "I do not have imported inbox evidence to triage yet. Sync the connected inboxes first, then ask again.";
+    }
+    const textFor = (item: ReturnType<typeof evidenceFromMessage>[number]) =>
+      `${item.sender} ${item.subject} ${item.summary} ${item.excerpt}`.toLowerCase();
+    const isNoise = (item: ReturnType<typeof evidenceFromMessage>[number]) =>
+      /(oauth application approval|database dump|odoo\.sh|newsletter|no.?reply|noreply|notification|informative|approval application)/i.test(textFor(item));
+    const isAction = (item: ReturnType<typeof evidenceFromMessage>[number]) =>
+      /(please|confirm|where is|arrange|deliver|delivery|pay|payment|quote|quotation|po\s?\d+|status|approved|approval|urgent|asap|today|need|can you|could you)/i.test(textFor(item));
+    const isWaiting = (item: ReturnType<typeof evidenceFromMessage>[number]) =>
+      /(we will pay|after payment|waiting|awaiting|ready for review|approved|sent|delivered|available for 2 hours)/i.test(textFor(item));
+
+    const actionable = evidence.filter((item) => isAction(item) && !isNoise(item)).slice(0, 6);
+    const waiting = evidence.filter((item) => isWaiting(item) && !actionable.some((action) => action.id === item.id) && !isNoise(item)).slice(0, 4);
+    const noise = evidence.filter(isNoise).slice(0, 6);
+    const remaining = evidence
+      .filter((item) => !actionable.some((action) => action.id === item.id) && !waiting.some((wait) => wait.id === item.id) && !noise.some((waste) => waste.id === item.id))
+      .slice(0, 4);
+
+    const line = (item: ReturnType<typeof evidenceFromMessage>[number]) =>
+      `[${item.ref}] ${item.sender} - ${item.subject}: ${item.summary}`;
+
+    return [
+      "Here is the useful triage from the imported inbox evidence:",
+      "",
+      actionable.length
+        ? `Do first / needs action:\n${actionable.map(line).join("\n")}`
+        : "Do first / needs action:\nNo obvious action item found in the retrieved evidence.",
+      "",
+      waiting.length
+        ? `Waiting / monitor:\n${waiting.map(line).join("\n")}`
+        : "Waiting / monitor:\nNothing obvious.",
+      "",
+      noise.length
+        ? `Likely time-wasters / low-value noise:\n${noise.map(line).join("\n")}`
+        : "Likely time-wasters / low-value noise:\nNothing obvious.",
+      "",
+      remaining.length
+        ? `Worth a quick scan if you have time:\n${remaining.map(line).join("\n")}`
+        : "",
+      "",
+      "Suggested next move: handle the first quoted/customer/delivery item, then ignore or batch the system notifications unless you are actively debugging setup.",
+    ].filter(Boolean).join("\n");
+  }
+
   if (/(find|search|show|list|only|with|about|comms?|communications?|emails?|messages?)/i.test(question)) {
     if (!evidence.length) {
       return `I could not find imported inbox messages matching "${question}". Try a shorter company name, contact name, email address, or source filter.`;

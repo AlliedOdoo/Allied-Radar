@@ -1048,7 +1048,7 @@ export default function Home() {
                 </div>
 
                 <div className="quick-prompts" aria-label="Suggested assistant prompts">
-                  {["Catch me up", "What needs reply?", "Find related comms", "Draft a reply", "Summarise open loops"].map((prompt) => (
+                  {["Triage what I missed", "What needs reply?", "Where am I wasting time?", "Find related comms", "Draft a reply"].map((prompt) => (
                     <button key={prompt} type="button" onClick={() => void askAssistant(undefined, prompt)}>
                       {prompt}
                     </button>
