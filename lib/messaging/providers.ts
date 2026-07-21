@@ -268,11 +268,62 @@ async function providerFailure(response: Response, provider: string) {
 }
 
 async function sendOutlook(message: OutboundMessage, token: string): Promise<SendResult> {
+  const recipients = (addresses: string[] = []) =>
+    addresses.map((address) => ({ emailAddress: { address } }));
+
+  if (message.replyToId && (message.cc?.length || message.bcc?.length)) {
+    const createReplyUrl = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(message.replyToId)}/${message.replyMode === "reply_all" ? "createReplyAll" : "createReply"}`;
+    const createResponse = await fetch(createReplyUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "client-request-id": message.clientRequestId,
+      },
+    });
+
+    if (!createResponse.ok) await providerFailure(createResponse, "Outlook");
+    const draft = (await createResponse.json().catch(() => ({}))) as { id?: string };
+    if (!draft.id) {
+      throw new MessagingError("provider_rejected", "Outlook did not return a reply draft", 502);
+    }
+
+    const patchResponse = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(draft.id)}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "client-request-id": message.clientRequestId,
+      },
+      body: JSON.stringify({
+        body: { contentType: "Text", content: message.content },
+        ...(message.cc?.length ? { ccRecipients: recipients(message.cc) } : {}),
+        ...(message.bcc?.length ? { bccRecipients: recipients(message.bcc) } : {}),
+      }),
+    });
+
+    if (!patchResponse.ok) await providerFailure(patchResponse, "Outlook");
+
+    const sendResponse = await fetch(`https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(draft.id)}/send`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "client-request-id": message.clientRequestId,
+      },
+    });
+
+    if (!sendResponse.ok) await providerFailure(sendResponse, "Outlook");
+
+    return {
+      provider: "Outlook",
+      state: "accepted",
+      providerMessageId: draft.id,
+      detail: "Outlook accepted the reply with CC/BCC recipients and saved it to Sent Items.",
+    };
+  }
+
   const replyUrl = message.replyToId
     ? `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(message.replyToId)}/${message.replyMode === "reply_all" ? "replyAll" : "reply"}`
     : "https://graph.microsoft.com/v1.0/me/sendMail";
-  const recipients = (addresses: string[] = []) =>
-    addresses.map((address) => ({ emailAddress: { address } }));
   const body = message.replyToId
     ? { comment: message.content }
     : {

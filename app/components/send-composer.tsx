@@ -131,14 +131,15 @@ export function SendComposer({
     () => status?.providers.find((item) => item.provider === provider),
     [provider, status],
   );
-  const canEditEmailAddresses = provider === "Outlook" && !replyToId;
+  const canEditDestination = provider === "Outlook" && !replyToId;
+  const canEditCcBcc = provider === "Outlook";
   const canEditHeaders = provider === "Outlook" && !replyToId;
-  const effectiveDestination = canEditEmailAddresses ? destinationValue.trim() : destination;
-  const effectiveCc = canEditEmailAddresses ? parseAddressList(ccValue) : cc;
-  const effectiveBcc = canEditEmailAddresses ? parseAddressList(bccValue) : bcc;
+  const effectiveDestination = canEditDestination ? destinationValue.trim() : destination;
+  const effectiveCc = canEditCcBcc ? parseAddressList(ccValue) : cc;
+  const effectiveBcc = canEditCcBcc ? parseAddressList(bccValue) : bcc;
   const effectiveHeaders = canEditHeaders ? parseHeaderList(headerValue) : internetMessageHeaders;
   const effectiveAttachments = provider === "Outlook" && !replyToId ? attachments : undefined;
-  const effectiveDestinationLabel = canEditEmailAddresses ? effectiveDestination || destinationLabel : destinationLabel;
+  const effectiveDestinationLabel = canEditDestination ? effectiveDestination || destinationLabel : destinationLabel;
   const canReview = Boolean(content.trim()) && Boolean(effectiveDestination.trim()) && !sending;
 
   useEffect(() => {
@@ -209,7 +210,7 @@ export function SendComposer({
   }, [content, draftKey, effectiveBcc, effectiveCc, effectiveDestination, effectiveHeaders, effectiveAttachments, provider, replyMode, subject]);
 
   useEffect(() => {
-    if (!canEditEmailAddresses) return;
+    if (!canEditDestination) return;
     const query = destinationValue.trim();
     if (query.length < 2) {
       setContacts([]);
@@ -226,7 +227,7 @@ export function SendComposer({
       if (response.ok) setContacts(payload.contacts ?? []);
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [canEditEmailAddresses, destinationValue]);
+  }, [canEditDestination, destinationValue]);
 
   useEffect(() => {
     let active = true;
@@ -466,7 +467,7 @@ export function SendComposer({
         </div>
       )}
 
-      {canEditEmailAddresses ? (
+      {canEditDestination ? (
         <div className="composer-address-grid">
           <label className="compose-input inline-compose-input">
             <span>To</span>
@@ -487,6 +488,17 @@ export function SendComposer({
               })}
             </datalist>
           </label>
+        </div>
+      ) : (
+        <label className="composer-field">
+          <span>To</span>
+          <strong>{destinationLabel}</strong>
+          <small>{provider === "Outlook" && replyMode === "reply_all" ? "Reply all" : provider}</small>
+        </label>
+      )}
+
+      {canEditCcBcc && (
+        <div className="composer-address-grid">
           <button className="composer-details-toggle" type="button" onClick={() => setDetailsOpen((open) => !open)}>
             {detailsOpen ? "Hide Cc/Bcc" : "Cc/Bcc"}
           </button>
@@ -519,12 +531,6 @@ export function SendComposer({
             </>
           )}
         </div>
-      ) : (
-        <label className="composer-field">
-          <span>To</span>
-          <strong>{destinationLabel}</strong>
-          <small>{provider === "Outlook" && replyMode === "reply_all" ? "Reply all" : provider}</small>
-        </label>
       )}
 
       {subject && !compact && (
