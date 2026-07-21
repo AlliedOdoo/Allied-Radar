@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { messages } from "../lib/mock-data";
 import { AI_MODEL_LABEL } from "../lib/guardrails";
 import { getSupabaseBrowserClient, MICROSOFT_GRAPH_SCOPES } from "../lib/supabase/browser";
@@ -112,6 +112,14 @@ const proactiveCards = [
     body: "Provide spending for quarter 3. There is likely a finance follow-up needed.",
     time: "1h",
     active: false,
+  },
+];
+
+const initialAssistantHistory: AssistantMessage[] = [
+  {
+    role: "assistant",
+    content:
+      "I'm your AI companion for this inbox - ask for catch-up, priorities, what needs a reply, or help shaping a response. I won't send anything.",
   },
 ];
 
@@ -267,6 +275,8 @@ export default function Home() {
         "Ask me anything about this inbox — catch-up, priorities, what needs a reply, or help shaping a response. I won’t send anything.",
     },
   ]);
+  const assistantHistoryRef = useRef<AssistantMessage[]>(assistantHistory);
+  const assistantMessagesRef = useRef<HTMLDivElement | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
   const [assistantNeedsAuth, setAssistantNeedsAuth] = useState(false);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
@@ -285,6 +295,16 @@ export default function Home() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [replyMode, setReplyMode] = useState<"reply" | "reply_all">("reply");
   const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  function updateAssistantHistory(
+    next:
+      | AssistantMessage[]
+      | ((current: AssistantMessage[]) => AssistantMessage[]),
+  ) {
+    const resolved = typeof next === "function" ? next(assistantHistoryRef.current) : next;
+    assistantHistoryRef.current = resolved;
+    setAssistantHistory(resolved);
+  }
 
   function parseAddressList(value: string) {
     return value
@@ -316,6 +336,12 @@ export default function Home() {
   useEffect(() => {
     window.localStorage.setItem("allied-radar-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const element = assistantMessagesRef.current;
+    if (!element || !assistantOpen) return;
+    element.scrollTop = element.scrollHeight;
+  }, [assistantHistory, assistantBusy, assistantOpen]);
 
   async function loadMailboxMessages(mailbox: MailboxFilter, query = "") {
     const { data } = await getSupabaseBrowserClient().auth.getSession();
@@ -516,7 +542,7 @@ export default function Home() {
     setAssistantOpen(false);
     void loadThread(message);
     void markLocalMessage(message, "open");
-    setAssistantHistory([
+    updateAssistantHistory([
       {
         role: "assistant",
         content: `I’m looking at ${message.contact} in ${message.source}. Ask for a catch-up, risks, next actions, or a reply draft.`,
@@ -530,8 +556,9 @@ export default function Home() {
     if (!question || assistantBusy) return;
 
     setAssistantOpen(true);
-    const nextHistory: AssistantMessage[] = [...assistantHistory, { role: "user", content: question }];
-    setAssistantHistory(nextHistory);
+    const historyBeforeQuestion = assistantHistoryRef.current;
+    const nextHistory: AssistantMessage[] = [...historyBeforeQuestion, { role: "user", content: question }];
+    updateAssistantHistory(nextHistory);
     setAssistantQuestion("");
     setAssistantBusy(true);
 
@@ -552,12 +579,12 @@ export default function Home() {
         body: JSON.stringify({
           question,
           selectedMessageId: selectedMessage?.id,
-          history: assistantHistory,
+          history: historyBeforeQuestion,
         }),
       });
       const payload = (await response.json()) as { answer?: string; error?: string; model?: string };
       if (!response.ok) throw new Error(payload.error || "AI companion is unavailable.");
-      setAssistantHistory([
+      updateAssistantHistory([
         ...nextHistory,
         {
           role: "assistant",
@@ -565,7 +592,7 @@ export default function Home() {
         },
       ]);
     } catch (error) {
-      setAssistantHistory([
+      updateAssistantHistory([
         ...nextHistory,
         {
           role: "assistant",
@@ -592,7 +619,7 @@ export default function Home() {
       });
       if (error) throw error;
     } catch (error) {
-      setAssistantHistory((current) => [
+      updateAssistantHistory((current) => [
         ...current,
         {
           role: "assistant",
@@ -929,7 +956,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <div className="assistant-messages">
+                <div className="assistant-messages" ref={assistantMessagesRef}>
                   {assistantHistory.map((message, index) => (
                     <article className={`assistant-bubble ${message.role}`} key={`${message.role}-${index}`}>
                       {message.content}
