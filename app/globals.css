@@ -826,18 +826,19 @@ button {
 
 .copilot-panel {
   position: absolute;
-  top: 82px;
-  right: 18px;
-  bottom: 132px;
+  inset: 0;
   z-index: 10;
-  width: min(420px, calc(100% - 36px));
+  width: 100%;
+  min-height: 0;
   margin: 0;
   overflow: hidden;
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  border-color: rgba(24, 24, 23, 0.12);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 24px 70px rgba(42, 39, 34, 0.18);
+  border: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.985);
+  box-shadow: none;
   backdrop-filter: blur(20px);
+  padding: 18px;
 }
 
 .assistant-chat header {
@@ -886,6 +887,27 @@ button {
   gap: 7px;
 }
 
+.companion-guardrails {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(59, 91, 219, 0.14);
+  border-radius: 10px;
+  background: rgba(59, 91, 219, 0.055);
+  color: var(--ink);
+  padding: 11px 12px;
+}
+
+.companion-guardrails strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.companion-guardrails span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .quick-prompts button {
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -899,14 +921,15 @@ button {
 .assistant-messages {
   display: grid;
   gap: 8px;
-  max-height: 260px;
+  align-content: start;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 2px;
 }
 
 .assistant-bubble {
   width: fit-content;
-  max-width: 92%;
+  max-width: min(760px, 92%);
   border: 1px solid var(--line);
   border-radius: 15px;
   background: #fff;
@@ -2049,6 +2072,8 @@ a,
 .app-shell[data-theme="dark"] .assistant-note,
 .app-shell[data-theme="dark"] .assistant-chat,
 .app-shell[data-theme="dark"] .assistant-bubble,
+.app-shell[data-theme="dark"] .assistant-citations button,
+.app-shell[data-theme="dark"] .companion-guardrails,
 .app-shell[data-theme="dark"] .connection-item,
 .app-shell[data-theme="dark"] .health-row,
 .app-shell[data-theme="dark"] .send-feedback,

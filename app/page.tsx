@@ -998,12 +998,19 @@ export default function Home() {
                     <small>{AI_MODEL_LABEL} · chat, search, summaries, drafts</small>
                   </div>
                   <button type="button" onClick={() => setAssistantOpen(false)}>
-                    Close
+                    Back to message
                   </button>
                 </header>
 
+                <div className="companion-guardrails" role="note">
+                  <strong>Full pane mode</strong>
+                  <span>
+                    I can search, read, summarise, cite sources, open messages, and draft. Sending or destructive actions still need your confirmation.
+                  </span>
+                </div>
+
                 <div className="quick-prompts" aria-label="Suggested assistant prompts">
-                  {["Catch me up", "What needs reply?", "Draft a short reply"].map((prompt) => (
+                  {["Catch me up", "What needs reply?", "Find related comms", "Draft a reply", "Summarise open loops"].map((prompt) => (
                     <button key={prompt} type="button" onClick={() => void askAssistant(undefined, prompt)}>
                       {prompt}
                     </button>
